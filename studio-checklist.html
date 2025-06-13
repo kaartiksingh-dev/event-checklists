@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noida Studio Displays Checklist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    td:nth-child(3) { text-align: left; }
+    th:nth-child(3) { text-align: center; }
+    th {
+      background-color: #2c3e50;
+      color: white;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: #f1f1f1; }
+    select, input[type="text"], input[type="time"], textarea {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 12px;
+      padding-right: 24px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    button:hover { background-color: #1a252f; }
+    button:focus {
+      outline: 2px solid #2c3e50;
+      outline-offset: 2px;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .button-group { display: none; }
+      table { box-shadow: none; }
+      .notes-section { display: block; }
+      .checked-by-container {
+        display: flex;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        width: 200px;
+        margin: 5px 20px 10px auto;
+        position: relative;
+        top: 0;
+        right: 0;
+      }
+      .checked-by-container label {
+        white-space: nowrap;
+      }
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      transition: opacity 0.5s;
+      font-size: 12px;
+    }
+    .toast.error {
+      background-color: #dc3545;
+    }
+    .toast.warning {
+      background-color: #ffc107;
+      color: #333;
+    }
+    .toast.info {
+      background-color: #17a2b8;
+    }
+    .status-ok {
+      background-color: #28a745;
+      color: white;
+      font-weight: normal;
+    }
+    .status-standby {
+      background-color: #ffc107;
+      color: #212529;
+      font-weight: normal;
+    }
+    .status-fault {
+      background-color: #fd7e14;
+      color: white;
+      font-weight: normal;
+    }
+    .status-not-working {
+      background-color: #dc3545;
+      color: white;
+      font-weight: normal;
+    }
+    .status-off {
+      background-color: #ff69b4;
+      color: white;
+      font-weight: normal;
+    }
+    .status-under-maintenance {
+      background-color: #800080;
+      color: white;
+      font-weight: normal;
+    }
+    .status-needs-repair {
+      background-color: #0000FF;
+      color: white;
+      font-weight: normal;
+    }
+    .status-testing {
+      background-color: #00FFFF;
+      color: #212529;
+      font-weight: normal;
+    }
+    .status-awaiting-parts {
+      background-color: #4B0082;
+      color: white;
+      font-weight: normal;
+    }
+    .status-calibrating {
+      background-color: #008080;
+      color: white;
+      font-weight: normal;
+    }
+    .status-out-of-service {
+      background-color: #6A5ACD;
+      color: white;
+      font-weight: normal;
+    }
+    .status-cube-a {
+      background-color: SandyBrown;
+      color: white;
+      font-weight: normal;
+    }
+    .status-cube-b {
+      background-color: Goldenrod;
+      color: white;
+      font-weight: normal;
+    }
+    .status-cube-c {
+      background-color: DarkGoldenrod;
+      color: white;
+      font-weight: normal;
+    }
+    .status-cube-d {
+      background-color: Peru;
+      color: white;
+      font-weight: normal;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+      margin: 0;
+    }
+    .header-checkbox-row {
+      display: flex;
+      background: #2c3e50;
+      padding: 5px 0;
+    }
+    .header-checkbox-cell {
+      flex: 1;
+      text-align: center;
+      min-width: 50px;
+    }
+    .header-checkbox {
+      margin: 0 auto;
+    }
+    .header-checkbox-label {
+      color: white;
+      font-size: 10px;
+      display: block;
+      margin-top: 2px;
+    }
+    .compact-select {
+      font-size: 11px;
+      padding: 4px;
+    }
+    .generate-report-btn {
+      background-color: #17a2b8;
+    }
+    .generate-report-btn:hover {
+      background-color: #138496;
+    }
+    .notes-section {
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .notes-section h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .notes-section textarea {
+      width: 100%;
+      min-height: 100px;
+      resize: vertical;
+    }
+    .checked-by-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .checked-by-container label {
+      margin-right: 10px;
+      font-size: 14px;
+      color: #2c3e50;
+      white-space: nowrap;
+    }
+    .checked-by-container select {
+      width: 150px;
+      font-size: 14px;
+    }
+    @media screen and (max-width: 768px) {
+      .checked-by-container {
+        justify-content: flex-start;
+        width: 100%;
+      }
+      .checked-by-container select {
+        width: 100%;
+        max-width: 150px;
+      }
+    }
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .title-container {
+      flex: 1;
+      min-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-section">
+      <div class="title-container">
+        <h1>Noida Studio Displays (Barco, Pixel LED & LED TVs) Checklist</h1>
+      </div>
+      <div class="checked-by-container">
+        <label for="checkedBy">Checked by:</label>
+        <select id="checkedBy">
+          <option value="Select" selected>Select</option>
+          <option value="Tyagi">Tyagi</option>
+          <option value="Kishor">Kishor</option>
+          <option value="Rajesh">Rajesh</option>
+          <option value="Virender">Virender</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="button-group">
+      <button onclick="exportToExcel()">Download Excel</button>
+      <button onclick="exportToPDF()">Download PDF (B3)</button>
+      <button onclick="window.print()">Print</button>
+      <button onclick="generateReport()" class="generate-report-btn">Generate Report</button>
+    </div>
+
+    <div class="header-checkbox-row" id="headerCheckboxes">
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-sno" checked>
+        <label for="col-sno" class="header-checkbox-label">S.No</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-floor" checked>
+        <label for="col-floor" class="header-checkbox-label">Floor</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-studio" checked>
+        <label for="col-studio" class="header-checkbox-label">Studio</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-barcmodel" checked>
+        <label for="col-barcmodel" class="header-checkbox-label">Barco Model</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-cubea" checked>
+        <label for="col-cubea" class="header-checkbox-label">CUBE-A</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-cubeb" checked>
+        <label for="col-cubeb" class="header-checkbox-label">CUBE-B</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-cubec" checked>
+        <label for="col-cubec" class="header-checkbox-label">CUBE-C</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-cubed" checked>
+        <label for="col-cubed" class="header-checkbox-label">CUBE-D</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-ledsize1" checked>
+        <label for="col-ledsize1" class="header-checkbox-label">LED Size 85/75 Inch</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-ledsize2" checked>
+        <label for="col-ledsize2" class="header-checkbox-label">LED Size 65/55 Inch</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-controller" checked>
+        <label for="col-controller" class="header-checkbox-label">Controller</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-lvcsrno"> 
+        <label for="col-lvcsrno" class="header-checkbox-label">LVC sr.no</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-novastarsrno">
+        <label for="col-novastarsrno" class="header-checkbox-label">Novastar sr.no</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-lvcrestart" checked>
+        <label for="col-lvcrestart" class="header-checkbox-label">LVC/NDS</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-wmenet" checked>
+        <label for="col-wmenet" class="header-checkbox-label">WME/NET</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-convertor" checked>
+        <label for="col-convertor" class="header-checkbox-label">Convertor</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-ledtvinput" checked>
+        <label for="col-ledtvinput" class="header-checkbox-label">LED TV 85/75 Input</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-tvinput" checked>
+        <label for="col-tvinput" class="header-checkbox-label">LED TV 65/55 Input</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-hdmiinput" checked>
+        <label for="col-hdmiinput" class="header-checkbox-label">HDMI Input</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-lvcinput" checked>
+        <label for="col-lvcinput" class="header-checkbox-label">LVC Input</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-pixelinput" checked>
+        <label for="col-pixelinput" class="header-checkbox-label">Pixel Input</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-time" checked>
+        <label for="col-time" class="header-checkbox-label">Time</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-status" checked>
+        <label for="col-status" class="header-checkbox-label">Status</label>
+      </div>
+      <div class="header-checkbox-cell">
+        <input type="checkbox" class="header-checkbox" id="col-remarks" checked>
+        <label for="col-remarks" class="header-checkbox-label">Remarks</label>
+      </div>
+    </div>
+
+    <table id="checklistTable">
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Floor</th>
+          <th>Studio</th>
+          <th>Barco Model</th>
+          <th>CUBE-A</th>
+          <th>CUBE-B</th>
+          <th>CUBE-C</th>
+          <th>CUBE-D</th>
+          <th>LED Size 85/75 Inch</th>
+          <th>LED Size 65/55 Inch</th>
+          <th>Controller</th>
+          <th>LVC sr.no</th>
+          <th>Novastar sr.no</th>
+          <th>LVC/NDS</th>
+          <th>WME/NET</th>
+          <th>Convertor</th>
+          <th>LED TV 85/75 Input</th>
+          <th>LED TV 65/55 Input</th>
+          <th>HDMI Input</th>
+          <th>LVC Input</th>
+          <th>Pixel Input</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+      </tbody>
+    </table>
+
+    <div class="notes-section">
+      <h3>Additional Notes</h3>
+      <textarea id="additionalNotes" placeholder="Enter any additional notes or comments here..."></textarea>
+    </div>
+  </div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+const tableBody = document.getElementById('tableBody');
+const headerCheckboxes = document.getElementById('headerCheckboxes');
+
+const config = {
+  floors: {
+    'GF': [
+      { name: 'Pixel LED', type: 'pixel', controller: 'NovaStar VX600', novastarSrNo: '21VB33323N1A10005433', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'Onair (HIN/ENG)', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ],
+    '12': [
+      { name: 'CNBC TV18 4x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: '', lvcSrNo: '6892055838', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: 'AUX 2&3', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNBC TV18 LED TV', type: 'led', ledSize1: '85"', ledSize2: '55" x 2', ledTvInput: 'AUX 5&6', tvInput: 'AUX 6', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNBC TV18 Pixel LED', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '2IMB42A19N0A10005307', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 4', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNBC Awaaz 3x2 Barco', type: 'barco', barcoModel: 'KVD', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'RTR', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNBC Awaaz LED TV', type: 'led', ledSize1: '85"', ledSize2: '', ledTvInput: 'RTR', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 JKLH 3x2 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 5', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 JKLH LED TV', type: 'led', ledSize1: '85"', ledSize2: '', ledTvInput: 'AUX 6', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ],
+    '18': [
+      { name: 'Network18 Reception Pixel LED', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '2IVB32C13N1A10041222', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'RTR', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ],
+    '20': [
+      { name: 'News18 UP/UK 3x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', cubeC: 'C1-To-C3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 4', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 UP/UK LED TV', type: 'led', ledSize1: '75"', ledSize2: '55" x 2', ledTvInput: 'AUX 13', tvInput: 'AUX 9', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 Bihar 3x2 Barco', type: 'barco', barcoModel: 'LVD', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 5', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 Bihar LED TV', type: 'led', ledSize1: '85"', ledSize2: '', ledTvInput: 'AUX 6', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 MP 3x2 Barco', type: 'barco', barcoModel: 'LVD', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 5', lvcInput: '', pixelInput: '', indemnify: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 MP LED TV', type: 'led', ledSize1: '85"', ledSize2: '', ledTvInput: 'AUX 6', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 Rajasthan 3x2 Barco', type: 'barco', barcoModel: 'LVD', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 5', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 Rajasthan LED TV', type: 'led', ledSize1: '85"', ledSize2: '', ledTvInput: 'AUX 6', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ],
+    '21': [
+      { name: 'News18 India Open 4x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', lvcSrNo: '6892055916', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 14', lvcInput: 'AUX 5', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India Open LED TV', type: 'led', ledSize1: '85"', ledSize2: '', ledTvInput: 'AUX 10', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India Open Pixel LED Wall', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '2IMB42A19N0A10005327', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 12', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India Open Pixel LED Pillar-1&2', type: 'pixel', controller: 'NovaStar VX600', novastarSrNo: '21VB32C13N1A10040559', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 13', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India Open Pixel LED Ticker-Right', type: 'pixel', controller: 'NovaStar VX600', novastarSrNo: '21VB33323N1A10005405', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'PC HDMI OUT', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India Open Pixel LED Ticker-Left', type: 'pixel', controller: 'NovaStar VX600', novastarSrNo: '21VB32C13N1A10041253', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'PC HDMI OUT', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ],
+    '22': [
+      { name: 'Firstpost 2x2 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A2', cubeB: 'B1-To-B2', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'Firstpost LED TV', type: 'led', ledSize1: '', ledSize2: '55"x3', ledTvInput: '', tvInput: 'AUX 5&6', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'Firstpost Pixel LED', type: 'pixel', controller: 'NovaStar H2', novastarSrNo: '2TUA42C15N0A10047464', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 3', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'Firstpost Pixel LED Table', type: 'pixel', controller: 'NovaStar H2', novastarSrNo: '2TUA42C15N0A10047464', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 4', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ],
+    '23': [
+      { name: 'CNN News18 7x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A7', cubeB: 'B1-To-B7', cubeC: 'C1-To-C7', lvcSrNo: '6892055917', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 9', lvcInput: 'AUX 1', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNN News18 4x4 Barco', type: 'barco', barcoModel: 'Unisee 800', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: 'D1-To-D4', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 3', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNN News18 LED TV', type: 'led', ledSize1: '85"x 2', ledSize2: '', ledTvInput: 'AUX 6', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNN News18 India Pixel LED', type: 'pixel', controller: 'NovaStar VX1', novastarSrNo: 'MHGA8221BN0A10013751', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 8', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India 5x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A5', cubeB: 'B1-To-B5', cubeC: 'C1-To-C5', lvcSrNo: '6892055839', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 8', lvcInput: 'AUX 4', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India 3x2 Barco', type: 'barco', barcoModel: 'Unisee 800', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'News18 India Pixel LED', type: 'pixel', controller: 'NovaStar H2', novastarSrNo: '2TUB02B12N0A10045314', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 6', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'Audience 6x4 Barco', type: 'barco', barcoModel: 'Unisee 800', cubeA: 'A1-To-A6', cubeB: 'B1-To-B6', cubeC: 'C1-To-C6', cubeD: 'D1-To-D6', lvcSrNo: '6892055836', ledTvInput: '', tvInput: '', hdmiInput: 'RTR', lvcInput: 'RTR', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'Audience LED TV', type: 'led', ledSize1: '85"', ledSize2: '55"x4', ledTvInput: 'RTR', tvInput: 'RTR', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'XR Pixel LED', type: 'pixel', controller: 'NovaStar H2', novastarSrNo: '2TUB13605W0A10030614', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'RTR', time: '09:00', status: 'OK', remarks: 'Working well' }
+    ]
+  },
+  options: {
+    status: ['OK', 'Standby', 'FAULT', 'NOT WORKING', 'OFF', 'Under Maintenance', 'Needs Repair', 'Testing', 'Awaiting Parts', 'Calibrating', 'Out of Service', 'Cube-A', 'Cube-B', 'Cube-C', 'Cube-D'],
+    statusDropdown: ['OK', 'Standby', 'FAULT', 'NOT WORKING', 'OFF', ],
+    ledSize: ['85"', '75"', '65"', '55"', '55" x 2', '55"x3', '55"x 4', '55"x 6', '85"x 2'],
+    barco: ['Unisee 700', 'Unisee 800', 'LVD', 'KVD'],
+    controller: ['NovaStar VX400', 'NovaStar VX600', 'NovaStar H2', 'NovaStar VX1'],
+    cubeA: ['A1-To-A2', 'A1-To-A3', 'A1-To-A4', 'A1-To-A5', 'A1-To-A6', 'A1-To-A7', 'Pixel LED Wall'],
+    cubeB: ['B1-To-B2', 'B1-To-B3', 'B1-To-B4', 'B1-To-B5', 'B1-To-B6', 'B1-To-B7', 'Pixel LED Wall'],
+    cubeC: ['C1-To-C2', 'C1-To-C3', 'C1-To-C4', 'C1-To-C5', 'C1-To-C6', 'C1-To-C7', 'Pixel LED Wall'],
+    cubeD: ['D1-To-D2', 'D1-To-D3', 'D1-To-D4', 'D1-To-D6', 'Pixel LED Wall']
+  },
+  defaults: {
+    status: 'OK',
+    time: '09:00',
+    remarks: 'Working well',
+    lvcRestart: 'OK',
+    wmeNetSw: 'OK',
+    convertor: 'OK'
+  },
+  columnOrder: [
+    'sno', 'floor', 'studio', 'barcmodel', 'cubea', 'cubeb', 'cubec', 'cubed',
+    'ledsize1', 'ledsize2', 'controller', 'lvcsrno', 'novastarsrno',
+    'lvcrestart', 'wmenet', 'convertor', 'ledtvinput', 'tvinput', 'hdmiinput', 'lvcinput',
+    'pixelinput', 'time', 'status', 'remarks'
+  ]
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  populateTable();
+  
+  document.querySelectorAll('#headerCheckboxes input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      // No longer hiding columns in the UI, just saving the state for PDF export
+      saveSettings();
+    });
+  });
+});
+
+function saveSettings() {
+  try {
+    const columnStates = {};
+    document.querySelectorAll('#headerCheckboxes input[type="checkbox"]').forEach(checkbox => {
+      columnStates[checkbox.id] = checkbox.checked;
+    });
+
+    const settings = {
+      columnStates: columnStates,
+      additionalNotes: document.getElementById('additionalNotes').value,
+      checkedBy: document.getElementById('checkedBy').value,
+      lastSaved: new Date().toISOString()
+    };
+    localStorage.setItem('studioDisplaysSettings', JSON.stringify(settings));
+    showToast('Settings saved successfully!');
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    showToast('Failed to save settings', 'error');
+  }
+}
+
+function loadSettings() {
+  try {
+    const savedSettings = localStorage.getItem('studioDisplaysSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      
+      if (settings.columnStates) {
+        Object.keys(settings.columnStates).forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) {
+            checkbox.checked = settings.columnStates[id];
+          }
+        });
+      }
+      
+      if (settings.additionalNotes) {
+        document.getElementById('additionalNotes').value = settings.additionalNotes;
+      }
+      
+      if (settings.checkedBy) {
+        document.getElementById('checkedBy').value = settings.checkedBy;
+      }
+      
+      showToast('Settings loaded successfully');
+    } else {
+      // Set default unchecked state for LVC sr.no and Novastar sr.no
+      document.getElementById('col-lvcsrno').checked = false;
+      document.getElementById('col-novastarsrno').checked = false;
+      showToast('No saved settings found', 'info');
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    showToast('Failed to load settings', 'error');
+  }
+}
+
+function resetSettings() {
+  if (confirm('Are you sure you want to reset all settings to defaults?')) {
+    try {
+      localStorage.removeItem('studioDisplaysSettings');
+      
+      document.querySelectorAll('#headerCheckboxes input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      document.getElementById('col-lvcsrno').checked = false;
+      document.getElementById('col-novastarsrno').checked = false;
+      
+      document.getElementById('additionalNotes').value = '';
+      document.getElementById('checkedBy').value = 'Select';
+      
+      showToast('Settings reset to defaults');
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+      showToast('Failed to reset settings', 'error');
+    }
+  }
+}
+
+function populateTable() {
+  let serial = 1;
+  
+  // First process GF floor
+  if (config.floors['GF']) {
+    config.floors['GF'].forEach(studio => {
+      console.log(`Row ${serial}: Floor GF, Studio ${studio.name}`);
+      addRow('GF', studio, serial++);
+    });
+  }
+  
+  // Then process all other floors in order
+  Object.keys(config.floors).forEach(floor => {
+    if (floor !== 'GF') { // Skip GF as we already processed it
+      config.floors[floor].forEach(studio => {
+        console.log(`Row ${serial}: Floor ${floor}, Studio ${studio.name}`);
+        addRow(floor, studio, serial++);
+      });
+    }
+  });
+}
+
+function addRow(floor, studioData, serial) {
+  const row = document.createElement('tr');
+  const isPixel = studioData.type === 'pixel';
+  const isLedDisplay = studioData.type === 'led';
+  const isBarco = studioData.type === 'barco';
+  
+  const emptyLvcRows = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 30, 31, 33, 34, 36, 37];
+  const rowsWithDropdowns = [5, 7, 10, 12, 14, 16, 18];
+  const emptyStatusRows = [1, 3, 4, 6, 8, 9, 11, 13, 15, 17, 18, 19, 20, 21, 22, 23, 25, 27, 26, 30, 31, 34, 36, 37];
+
+  row.innerHTML = `
+    <td>${serial}</td>
+    <td>${floor}</td>
+    <td>${studioData.name}</td>
+    <td>${isBarco ? studioData.barcoModel || '' : ''}</td>
+    ${isPixel || isLedDisplay ? '<td></td><td></td><td></td><td></td>' : `
+      <td>${studioData.cubeA || ''}</td>
+      <td>${studioData.cubeB || ''}</td>
+      <td>${studioData.cubeC || ''}</td>
+      <td>${studioData.cubeD || ''}</td>`}
+    <td>${isPixel ? '' : studioData.ledSize1 || ''}</td>
+    <td>${isPixel ? '' : studioData.ledSize2 || ''}</td>
+    <td>${isPixel ? studioData.controller || '' : ''}</td>
+    <td>${studioData.lvcSrNo || ''}</td>
+    <td>${studioData.novastarSrNo || ''}</td>
+    <td>${emptyLvcRows.includes(serial) ? '' : dropdown(config.options.statusDropdown, studioData.lvcRestart || config.defaults.lvcRestart, 'compact-select')}</td>
+    <td>${emptyStatusRows.includes(serial) && !rowsWithDropdowns.includes(serial) ? '' : dropdown(config.options.statusDropdown, studioData.wmeNetSw || config.defaults.wmeNetSw, 'compact-select')}</td>
+    <td>${emptyStatusRows.includes(serial) && !rowsWithDropdowns.includes(serial) ? '' : dropdown(config.options.statusDropdown, studioData.convertor || config.defaults.convertor, 'compact-select')}</td>
+    <td>${studioData.ledTvInput || ''}</td>
+    <td>${studioData.tvInput || ''}</td>
+    <td>${studioData.hdmiInput || ''}</td>
+    <td>${studioData.lvcInput || ''}</td>
+    <td>${studioData.pixelInput || ''}</td>
+    <td><input type="time" value="${studioData.time || config.defaults.time}" class="compact-select"></td>
+    <td>${dropdown(config.options.status, studioData.status || config.defaults.status, 'compact-select')}</td>
+    <td><input type="text" value="${studioData.remarks || config.defaults.remarks || ''}" class="compact-select"></td>
+  `;
+  tableBody.appendChild(row);
+  
+  applyRowStyling(row);
+}
+
+function applyRowStyling(row) {
+  const textColorCells = [
+    row.cells[13],
+    row.cells[14],
+    row.cells[15]
+  ];
+  
+  const bgColorCells = [
+    row.cells[row.cells.length - 2]
+  ];
+  
+  textColorCells.forEach(cell => {
+    const select = cell.querySelector('select');
+    if (select) {
+      const value = select.value;
+      applyTextColor(cell, value);
+      select.addEventListener('change', (e) => {
+        applyTextColor(cell, e.target.value);
+      });
+    }
+  });
+  
+  bgColorCells.forEach(cell => {
+    const value = cell.querySelector('select')?.value || cell.textContent;
+    applyBgColor(cell, value);
+    
+    const select = cell.querySelector('select');
+    if (select) {
+      select.addEventListener('change', (e) => {
+        applyBgColor(cell, e.target.value);
+      });
+    }
+  });
+}
+
+function applyTextColor(cell, value) {
+  const select = cell.querySelector('select');
+  if (!select) return;
+
+  let color = '#000000';
+  if (value.includes('OK')) {
+    color = '#28a745';
+  } else if (value.includes('Standby')) {
+    color = '#ffc107';
+  } else if (value.includes('FAULT')) {
+    color = '#fd7e14';
+  } else if (value.includes('NOT WORKING')) {
+    color = '#dc3545';
+  } else if (value.includes('OFF')) {
+    color = '#ff69b4';
+  } else if (value.includes('Under Maintenance')) {
+    color = '#800080';
+  } else if (value.includes('Needs Repair')) {
+    color = '#0000FF';
+  } else if (value.includes('Testing')) {
+    color = '#00FFFF';
+  } else if (value.includes('Awaiting Parts')) {
+    color = '#4B0082';
+  } else if (value.includes('Calibrating')) {
+    color = '#008080';
+  } else if (value.includes('Out of Service')) {
+    color = '#6A5ACD';
+  } else if (value.includes('Cube-A')) {
+    color = 'SandyBrown';
+  } else if (value.includes('Cube-B')) {
+    color = 'Goldenrod';
+  } else if (value.includes('Cube-C')) {
+    color = 'DarkGoldenrod';
+  } else if (value.includes('Cube-D')) {
+    color = 'Peru';
+  }
+  select.style.color = color;
+}
+
+function applyBgColor(cell, value) {
+  cell.classList.remove('status-ok', 'status-standby', 'status-fault', 'status-not-working', 'status-off',
+                       'status-under-maintenance', 'status-needs-repair', 'status-testing',
+                       'status-awaiting-parts', 'status-calibrating', 'status-out-of-service',
+                       'status-cube-a', 'status-cube-b', 'status-cube-c', 'status-cube-d');
+  
+  if (value.includes('OK')) {
+    cell.classList.add('status-ok');
+  } else if (value.includes('Standby')) {
+    cell.classList.add('status-standby');
+  } else if (value.includes('FAULT')) {
+    cell.classList.add('status-fault');
+  } else if (value.includes('NOT WORKING')) {
+    cell.classList.add('status-not-working');
+  } else if (value.includes('OFF')) {
+    cell.classList.add('status-off');
+  } else if (value.includes('Under Maintenance')) {
+    cell.classList.add('status-under-maintenance');
+  } else if (value.includes('Needs Repair')) {
+    cell.classList.add('status-needs-repair');
+  } else if (value.includes('Testing')) {
+    cell.classList.add('status-testing');
+  } else if (value.includes('Awaiting Parts')) {
+    cell.classList.add('status-awaiting-parts');
+  } else if (value.includes('Calibrating')) {
+    cell.classList.add('status-calibrating');
+  } else if (value.includes('Out of Service')) {
+    cell.classList.add('status-out-of-service');
+  } else if (value.includes('Cube-A')) {
+    cell.classList.add('status-cube-a');
+  } else if (value.includes('Cube-B')) {
+    cell.classList.add('status-cube-b');
+  } else if (value.includes('Cube-C')) {
+    cell.classList.add('status-cube-c');
+  } else if (value.includes('Cube-D')) {
+    cell.classList.add('status-cube-d');
+  }
+}
+
+function dropdown(options, defaultVal, additionalClass = '') {
+  if (!options || options.length === 0) return '';
+  return `<select class="${additionalClass}">${options.map(opt => `<option ${opt === defaultVal ? 'selected' : ''}>${opt}</option>`).join('')}</select>`;
+}
+
+async function exportToPDF() {
+  try {
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: [353, 500]
+    });
+
+    const today = new Date();
+    const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getFullYear()} ${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+    const fileName = `Noida Studio Displays (Barco, Pixel LED & LED TVs) - ${dateString}.pdf`;
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Noida Studio Displays (Barco, Pixel LED & LED TVs) Checklist', 250, 10, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Network18 | ${dateString}`, 250, 15, { align: 'center' });
+
+    const checkedBy = document.getElementById('checkedBy').value;
+    if (checkedBy !== 'Select') {
+      doc.setFontSize(12);
+      doc.text(`Checked by: ${checkedBy}`, 480, 15, { align: 'right' });
+    }
+
+    let startY = 20;
+    const table = document.getElementById('checklistTable');
+    const headers = [];
+    const columnIndices = [];
+    
+    const headerCells = Array.from(table.rows[0].cells);
+    const checkboxes = Array.from(document.querySelectorAll('#headerCheckboxes input[type="checkbox"]'));
+    
+    checkboxes.forEach((checkbox, index) => {
+      if (checkbox.checked && index < headerCells.length) {
+        headers.push(headerCells[index].textContent.trim());
+        columnIndices.push(index);
+      }
+    });
+    
+    const data = Array.from(table.rows).slice(1).map(row => {
+      return columnIndices.map(index => {
+        const cell = row.cells[index];
+        let text = cell.querySelector('select')?.value || 
+                  cell.querySelector('input')?.value || 
+                  cell.textContent.trim();
+        return text.replace(/[✅🟡⚠️❌🔴]/g, '').trim();
+      });
+    });
+
+    const colWidths = headers.map((header, i) => {
+      if (header === 'Remarks') return 50;
+      if (header === 'Studio') return 60;
+      if (header === 'Barco Model') return 30; 
+      if (header === 'Controller') return 30;
+      if (header === 'LVC sr.no') return 25;
+      if (header === 'Novastar sr.no') return 35;
+      if (header === 'LED Size 85/75 Inch') return 25;
+      if (header === 'LED Size 65/55 Inch') return 25;
+      if (header === 'LED TV 85/75 Input') return 25;
+      if (header === 'LED TV 65/55 Input') return 25;
+      if (header === 'CUBE-A') return 25;
+      if (header === 'CUBE-B') return 25;
+      if (header === 'CUBE-C') return 25;
+      if (header === 'CUBE-D') return 25;
+      if (header === 'Time') return 15;
+      if (header === 'Status') return 20;
+      if (header === 'LVC/NDS') return 20;
+      if (header === 'WME/NET') return 20;
+      if (header === 'Convertor') return 20;
+            
+                   
+      const headerLength = header.length * 1.5;
+      const maxDataLength = Math.max(...data.map(row => row[i] ? String(row[i]).length * 1.2 : 0));
+      return Math.min(25, Math.max(15, Math.max(headerLength, maxDataLength)));
+    });
+
+    const totalWidth = colWidths.reduce((a, b) => a + b, 0);
+    const scaleFactor = Math.min(1, 480 / totalWidth);
+    const scaledColWidths = colWidths.map(width => width * scaleFactor);
+
+    doc.autoTable({
+      head: [headers],
+      body: data,
+      startY: startY,
+      margin: { left: 10, right: 10 },
+      styles: {
+        fontSize: 8,
+        cellPadding: 1,
+        overflow: 'linebreak',
+        valign: 'middle',
+        lineWidth: 0.1
+      },
+      columnStyles: headers.reduce((styles, header, i) => {
+        styles[i] = { 
+          cellWidth: scaledColWidths[i],
+          halign: header === 'Studio' || header === 'Remarks' ? 'left' : 'center',
+          valign: 'middle'
+        };
+        return styles;
+      }, {}),
+      headStyles: {
+        fillColor: [44, 62, 80],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'center'
+      },
+      bodyStyles: {
+        fontSize: 8,
+        lineWidth: 0.1
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      didParseCell: function(data) {
+        const statusColumns = ['LVC/NDS', 'WME/NET', 'Convertor', 'Status'];
+        if (statusColumns.includes(headers[data.column.index])) {
+          const cellValue = data.cell.raw;
+          
+          if (cellValue && (cellValue.includes('NOT WORKING') || 
+                           cellValue.includes('FAULT') || 
+                           cellValue.includes('web control not working') ||
+                           cellValue.includes('fault'))) {
+            data.cell.styles.textColor = [220, 53, 69];
+          } else if (cellValue && cellValue.includes('Standby')) {
+            data.cell.styles.textColor = [255, 193, 7];
+          } else if (cellValue && cellValue.includes('OK')) {
+            data.cell.styles.textColor = [40, 167, 69];
+          } else if (cellValue && cellValue.includes('OFF')) {
+            data.cell.styles.textColor = [255, 105, 180];
+          } else if (cellValue && cellValue.includes('Under Maintenance')) {
+            data.cell.styles.textColor = [128, 0, 128];
+          } else if (cellValue && cellValue.includes('Needs Repair')) {
+            data.cell.styles.textColor = [0, 0, 255];
+          } else if (cellValue && cellValue.includes('Testing')) {
+            data.cell.styles.textColor = [0, 255, 255];
+          } else if (cellValue && cellValue.includes('Awaiting Parts')) {
+            data.cell.styles.textColor = [75, 0, 130];
+          } else if (cellValue && cellValue.includes('Calibrating')) {
+            data.cell.styles.textColor = [0, 128, 128];
+          } else if (cellValue && cellValue.includes('Out of Service')) {
+            data.cell.styles.textColor = [106, 90, 205];
+          } else if (cellValue && cellValue.includes('Cube-A')) {
+            data.cell.styles.textColor = [210, 180, 140]; // SandyBrown
+          } else if (cellValue && cellValue.includes('Cube-B')) {
+            data.cell.styles.textColor = [218, 165, 32]; // Goldenrod
+          } else if (cellValue && cellValue.includes('Cube-C')) {
+            data.cell.styles.textColor = [184, 134, 11]; // DarkGoldenrod
+          } else if (cellValue && cellValue.includes('Cube-D')) {
+            data.cell.styles.textColor = [205, 133, 63]; // Peru
+          }
+          
+          if (headers[data.column.index] === 'Status') {
+            if (cellValue && cellValue.includes('OK')) {
+              data.cell.styles.fillColor = [40, 167, 69];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Standby')) {
+              data.cell.styles.fillColor = [255, 193, 7];
+              data.cell.styles.textColor = [33, 37, 41];
+            } else if (cellValue && cellValue.includes('FAULT')) {
+              data.cell.styles.fillColor = [253, 126, 20];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('NOT WORKING')) {
+              data.cell.styles.fillColor = [220, 53, 69];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('OFF')) {
+              data.cell.styles.fillColor = [255, 105, 180];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Under Maintenance')) {
+              data.cell.styles.fillColor = [128, 0, 128];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Needs Repair')) {
+              data.cell.styles.fillColor = [0, 0, 255];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Testing')) {
+              data.cell.styles.fillColor = [0, 255, 255];
+              data.cell.styles.textColor = [33, 37, 41];
+            } else if (cellValue && cellValue.includes('Awaiting Parts')) {
+              data.cell.styles.fillColor = [75, 0, 130];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Calibrating')) {
+              data.cell.styles.fillColor = [0, 128, 128];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Out of Service')) {
+              data.cell.styles.fillColor = [106, 90, 205];
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Cube-A')) {
+              data.cell.styles.fillColor = [210, 180, 140]; // SandyBrown
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Cube-B')) {
+              data.cell.styles.fillColor = [218, 165, 32]; // Goldenrod
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Cube-C')) {
+              data.cell.styles.fillColor = [184, 134, 11]; // DarkGoldenrod
+              data.cell.styles.textColor = [255, 255, 255];
+            } else if (cellValue && cellValue.includes('Cube-D')) {
+              data.cell.styles.fillColor = [205, 133, 63]; // Peru
+              data.cell.styles.textColor = [255, 255, 255];
+            }
+          }
+        }
+      },
+      pageBreak: 'avoid',
+      tableWidth: 'wrap'
+    });
+
+    const notes = document.getElementById('additionalNotes').value.trim();
+    let finalY = doc.lastAutoTable.finalY || 25;
+
+    if (notes) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Additional Notes:', 10, finalY + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(notes, 10, finalY + 15, { maxWidth: 480 });
+    }
+
+    doc.save(fileName);
+    
+  } catch (error) {
+    console.error("PDF Generation Error:", error);
+    showToast("PDF generation failed. Please try again.", 'error');
+  }
+}
+
+function exportToExcel() {
+  try {
+    const today = new Date();
+    const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getFullYear()} ${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+    const fileName = `Noida Studio Displays (Barco, Pixel LED & LED TVs) - ${dateString}.xlsx`;
+
+    const table = document.getElementById('checklistTable');
+    const tempTable = document.createElement('table');
+    
+    const headerRow = document.createElement('tr');
+    const headerCell = document.createElement('th');
+    headerCell.colSpan = table.rows[0].cells.length;
+    headerCell.textContent = `Network18 | ${dateString}`;
+    headerCell.style.textAlign = 'center';
+    headerCell.style.fontWeight = 'bold';
+    headerRow.appendChild(headerCell);
+    tempTable.appendChild(headerRow);
+    
+    const checkedBy = document.getElementById('checkedBy').value;
+    if (checkedBy !== 'Select') {
+      const checkedByRow = document.createElement('tr');
+      const checkedByCell = document.createElement('td');
+      checkedByCell.colSpan = table.rows[0].cells.length;
+      checkedByCell.textContent = `Checked by: ${checkedBy}`;
+      checkedByCell.style.textAlign = 'center';
+      checkedByCell.style.fontWeight = 'bold';
+      checkedByRow.appendChild(checkedByCell);
+      tempTable.appendChild(checkedByRow);
+    }
+    
+    const headerRow2 = document.createElement('tr');
+    Array.from(table.rows[0].cells).forEach((cell, index) => {
+      if (document.getElementById(`col-${config.columnOrder[index]}`)?.checked) {
+        const th = document.createElement('th');
+        th.textContent = cell.textContent.trim();
+        headerRow2.appendChild(th);
+      }
+    });
+    tempTable.appendChild(headerRow2);
+    
+    Array.from(table.rows).slice(1).forEach(row => {
+      const newRow = document.createElement('tr');
+      Array.from(row.cells).forEach((cell, index) => {
+        if (document.getElementById(`col-${config.columnOrder[index]}`)?.checked) {
+          const td = document.createElement('td');
+          const value = cell.querySelector('select')?.value || 
+                       cell.querySelector('input')?.value || 
+                       cell.textContent;
+          td.textContent = value;
+          
+          const headerText = table.rows[0].cells[index].textContent.trim();
+          const statusColumns = ['LVC/NDS', 'WME/NET', 'Convertor', 'Status'];
+          
+          if (statusColumns.includes(headerText)) {
+            if (value.includes('NOT WORKING') || value.includes('FAULT') || 
+                value.includes('web control not working') || value.includes('fault')) {
+              td.style.color = '#dc3545';
+            } else if (value.includes('Standby')) {
+              td.style.color = '#ffc107';
+            } else if (value.includes('OK')) {
+              td.style.color = '#28a745';
+            } else if (value.includes('OFF')) {
+              td.style.color = '#ff69b4';
+            } else if (value.includes('Under Maintenance')) {
+              td.style.color = '#800080';
+            } else if (value.includes('Needs Repair')) {
+              td.style.color = '#0000FF';
+            } else if (value.includes('Testing')) {
+              td.style.color = '#00FFFF';
+            } else if (value.includes('Awaiting Parts')) {
+              td.style.color = '#4B0082';
+            } else if (value.includes('Calibrating')) {
+              td.style.color = '#008080';
+            } else if (value.includes('Out of Service')) {
+              td.style.color = '#6A5ACD';
+            } else if (value.includes('Cube-A')) {
+              td.style.color = 'SandyBrown';
+            } else if (value.includes('Cube-B')) {
+              td.style.color = 'Goldenrod';
+            } else if (value.includes('Cube-C')) {
+              td.style.color = 'DarkGoldenrod';
+            } else if (value.includes('Cube-D')) {
+              td.style.color = 'Peru';
+            }
+            
+            if (headerText === 'Status') {
+              if (value.includes('OK')) {
+                td.style.backgroundColor = '#28a745';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Standby')) {
+                td.style.backgroundColor = '#ffc107';
+                td.style.color = '#212529';
+              } else if (value.includes('FAULT')) {
+                td.style.backgroundColor = '#fd7e14';
+                td.style.color = '#ffffff';
+              } else if (value.includes('NOT WORKING')) {
+                td.style.backgroundColor = '#dc3545';
+                td.style.color = '#ffffff';
+              } else if (value.includes('OFF')) {
+                td.style.backgroundColor = '#ff69b4';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Under Maintenance')) {
+                td.style.backgroundColor = '#800080';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Needs Repair')) {
+                td.style.backgroundColor = '#0000FF';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Testing')) {
+                td.style.backgroundColor = '#00FFFF';
+                td.style.color = '#212529';
+              } else if (value.includes('Awaiting Parts')) {
+                td.style.backgroundColor = '#4B0082';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Calibrating')) {
+                td.style.backgroundColor = '#008080';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Out of Service')) {
+                td.style.backgroundColor = '#6A5ACD';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Cube-A')) {
+                td.style.backgroundColor = 'SandyBrown';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Cube-B')) {
+                td.style.backgroundColor = 'Goldenrod';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Cube-C')) {
+                td.style.backgroundColor = 'DarkGoldenrod';
+                td.style.color = '#ffffff';
+              } else if (value.includes('Cube-D')) {
+                td.style.backgroundColor = 'Peru';
+                td.style.color = '#ffffff';
+              }
+            }
+          }
+          
+          newRow.appendChild(td);
+        }
+      });
+      tempTable.appendChild(newRow);
+    });
+    
+    const notes = document.getElementById('additionalNotes').value.trim();
+    if (notes) {
+      const notesRow = document.createElement('tr');
+      const notesCell = document.createElement('td');
+      notesCell.colSpan = headerRow2.cells.length;
+      notesCell.textContent = `Additional Notes: ${notes}`;
+      notesCell.style.fontWeight = 'bold';
+      notesRow.appendChild(notesCell);
+      tempTable.appendChild(notesRow);
+    }
+    
+    const wb = XLSX.utils.table_to_book(tempTable, { sheet: "Checklist" });
+    
+    if (!wb.Workbook) wb.Workbook = {};
+    if (!wb.Workbook.Views) wb.Workbook.Views = [];
+    if (!wb.Workbook.Views[0]) wb.Workbook.Views[0] = {};
+    wb.Workbook.Views[0].RTL = false;
+    
+    wb.Workbook.Sheets = wb.Workbook.Sheets || {};
+    wb.Workbook.Sheets[wb.SheetNames[0]] = wb.Workbook.Sheets[wb.SheetNames[0]] || {};
+    wb.Workbook.Sheets[wb.SheetNames[0]].PageSetup = { paperSize: 14 };
+    
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const header = XLSX.utils.encode_col(C) + "1";
+      if (!ws[header]) continue;
+      let max_width = ws[header].v.length;
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const cell = XLSX.utils.encode_col(C) + (R + 1);
+        if (ws[cell] && ws[cell].v) {
+          const cell_length = ws[cell].v.toString().length;
+          if (cell_length > max_width) max_width = cell_length;
+        }
+      }
+      ws['!cols'] = ws['!cols'] || [];
+      ws['!cols'][C] = { width: Math.min(50, max_width * 0.8) };
+    }
+    
+    XLSX.writeFile(wb, fileName);
+  } catch (error) {
+    console.error("Excel Error:", error);
+    showToast("Excel export failed", 'error');
+  }
+}
+
+function generateReport() {
+  try {
+    const today = new Date();
+    const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getFullYear()} ${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+    
+    let reportContent = `Noida Studio Displays Status Report\n`;
+    reportContent += `Generated on: ${dateString}\n`;
+    
+    const checkedBy = document.getElementById('checkedBy').value;
+    if (checkedBy !== 'Select') {
+      reportContent += `Checked by: ${checkedBy}\n`;
+    }
+    reportContent += `\n`;
+    
+    const rows = Array.from(document.querySelectorAll('#checklistTable tbody tr'));
+    
+    let okCount = 0;
+    let faultCount = 0;
+    let notWorkingCount = 0;
+    let standbyCount = 0;
+    let offCount = 0;
+    let underMaintenanceCount = 0;
+    let needsRepairCount = 0;
+    let testingCount = 0;
+    let awaitingPartsCount = 0;
+    let calibratingCount = 0;
+    let outOfServiceCount = 0;
+    let cubeACount = 0;
+    let cubeBCount = 0;
+    let cubeCCount = 0;
+    let cubeDCount = 0;
+    
+    rows.forEach(row => {
+      const statusCell = row.cells[row.cells.length - 2];
+      const status = statusCell.querySelector('select')?.value || statusCell.textContent;                 
+      if (status.includes('OK')) okCount++;
+      else if (status.includes('FAULT')) faultCount++;
+      else if (status.includes('NOT WORKING')) notWorkingCount++;
+      else if (status.includes('Standby')) standbyCount++;
+      else if (status.includes('OFF')) offCount++;
+      else if (status.includes('Under Maintenance')) underMaintenanceCount++;
+      else if (status.includes('Needs Repair')) needsRepairCount++;
+      else if (status.includes('Testing')) testingCount++;
+      else if (status.includes('Awaiting Parts')) awaitingPartsCount++;
+      else if (status.includes('Calibrating')) calibratingCount++;
+      else if (status.includes('Out of Service')) outOfServiceCount++;
+    });
+    
+    reportContent += `Summary:\n`;
+    reportContent += `- Working (OK): ${okCount}\n`;
+    reportContent += `- Faulty: ${faultCount}\n`;
+    reportContent += `- Not Working: ${notWorkingCount}\n`;
+    reportContent += `- Standby: ${standbyCount}\n`;
+    reportContent += `- Off: ${offCount}\n`;
+    reportContent += `- Under Maintenance: ${underMaintenanceCount}\n`;
+    reportContent += `- Needs Repair: ${needsRepairCount}\n`;
+    reportContent += `- Testing: ${testingCount}\n`;
+    reportContent += `- Awaiting Parts: ${awaitingPartsCount}\n`;
+    reportContent += `- Calibrating: ${calibratingCount}\n`;
+    reportContent += `- Out of Service: ${outOfServiceCount}\n\n`;
+    
+    reportContent += `Details of Issues:\n`;
+    
+    rows.forEach(row => {
+      const studioCell = row.cells[2];
+      const statusCell = row.cells[row.cells.length - 2];
+      const remarksCell = row.cells[row.cells.length - 1];
+      
+      const studio = studioCell.textContent;
+      const status = statusCell.querySelector('select')?.value || statusCell.textContent;
+      const remarks = remarksCell.querySelector('input')?.value || remarksCell.textContent;
+      
+     
+      if (!status.includes('OK')) {
+        reportContent += `- ${studio}: ${status} (${remarks})\n`;
+      }
+    });
+    
+    const notes = document.getElementById('additionalNotes').value.trim();
+    if (notes) {
+      reportContent += `\nAdditional Notes:\n${notes}\n`;
+    }
+    
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Studio_Displays_Report_${dateString.replace(/:/g, '-')}.txt`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showToast('Report generated successfully');
+  } catch (error) {
+    console.error("Report Generation Error:", error);
+    showToast("Failed to generate report", 'error');
+  }
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
+}
+</script>
+</body>
+</html>

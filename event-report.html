@@ -1,0 +1,1133 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Report Form</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React and ReactDOM (latest stable) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <!-- PropTypes -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <!-- Babel Standalone (latest) -->
+  <script src="https://unpkg.com/@babel/standalone@7.25.7/babel.min.js"></script>
+  <!-- jsPDF and autoTable (latest) -->
+  <script src="https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS (latest) -->
+  <script src="https://unpkg.com/xlsx@0.20.3/dist/xlsx.full.min.js"></script>
+</head>
+<body className="bg-gray-50 font-sans">
+  <div id="root"></div>
+  <div id="error" className="hidden text-red-600 p-4"></div>
+  <script type="text/babel">
+    // Error Boundary Component
+    class ErrorBoundary extends React.Component {
+      state = { hasError: false, error: null };
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('Error caught by boundary:', error, errorInfo);
+        document.getElementById('error').className = 'text-red-600 p-4';
+        document.getElementById('error').innerText = `Error: ${error.message}`;
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return <h1>Something went wrong. Check the console for details.</h1>;
+        }
+        return this.props.children;
+      }
+    }
+
+    // Main EventReportForm component
+    function EventReportForm() {
+      // Form state
+      const [formData, setFormData] = React.useState({
+        daySelection: 'Select',
+        createdBy: '',
+        eventName: '',
+        date: '',
+        channel: '',
+        location: '',
+        city: '',
+        showCategory: '',
+        showType: '',
+        showSetup: '',
+        eventEngineer: '',
+        showProducer: '',
+        showDop: '',
+        onlineEditor: '',
+        electrical: '',
+        soundEngineer: '',
+        productionControl: '',
+        installationTime: '',
+        checkingDone: '',
+        feedTestLocation: '',
+        eventStartTime: '',
+        eventEndTime: '',
+        eventDuration: '',
+        equipment: [
+          { name: 'Cameras', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Lens', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Lens HJ 40x', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Lens HJ 24x', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Lens 70x', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Lens 14 Wide angle', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Tripod', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Jimmy Jib', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: '14" Monitor', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Plasma', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Switcher', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Talk Back', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'P2 VTR / AJA KI PRO', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Audio Mixer', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'PCR Speaker', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Anchor EP', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Watchout / Vmix', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'Main Sound', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' },
+          { name: 'PCR UPS', modelNo: '', qty: '', installationTime: '', doneTime: '', inHouse: false, hired: false, vendorName: '', remarks: '', status: '' }
+        ],
+        liveSource: [
+          { name: 'Uplink Main', available: 'Select', source: '', value: '', notes: '', status: '' },
+          { name: 'Uplink Backup', available: 'Select', source: '', value: '', notes: '', status: '' },
+          { name: 'Longshot Camera', available: 'Select', source: '', value: '', notes: '', status: '' },
+          { name: 'LAN', available: 'Select', source: '', unit: 'Mbps', value: '', notes: '', status: '' }
+        ],
+        power: [
+          { source: 'House Supply', available: '', kVA: '', enterValue: '', note: '', status: '' },
+          { source: 'DG', available: '', kVA: '', enterValue: '', note: '', status: '' },
+          { source: 'UPS', available: '', kVA: '', enterValue: '', note: '', status: '' },
+          { source: 'ATS', available: '', kVA: '', enterValue: '', note: '', status: '' },
+          { source: 'Earthling', available: '', kVA: '', enterValue: '', note: '', status: '' }
+        ],
+        eventEngineerComments: '',
+        signature: '',
+        signatureDate: '',
+        secondDate: '',
+        secondCheckingDone: '',
+        secondFeedTestLocation: '',
+        secondEventDuration: '',
+        secondEventEngineerComments: '',
+        secondSignature: '',
+        secondSignatureDate: ''
+      });
+
+      // Input change handler
+      const handleInputChange = (e) => {
+        try {
+          const { name, value } = e.target;
+          setFormData({ ...formData, [name]: value });
+        } catch (error) {
+          console.error('Input change error:', error);
+        }
+      };
+
+      // Equipment checkbox handler
+      const handleEquipmentCheckbox = (index, field) => {
+        try {
+          const updatedEquipment = [...formData.equipment];
+          updatedEquipment[index][field] = !updatedEquipment[index][field];
+          if (field === 'hired' && !updatedEquipment[index][field]) {
+            updatedEquipment[index].vendorName = '';
+          }
+          setFormData({ ...formData, equipment: updatedEquipment });
+        } catch (error) {
+          console.error('Equipment checkbox error:', error);
+        }
+      };
+
+      // Equipment input handler
+      const handleEquipmentInput = (index, field, value) => {
+        try {
+          const updatedEquipment = [...formData.equipment];
+          updatedEquipment[index][field] = value;
+          setFormData({ ...formData, equipment: updatedEquipment });
+        } catch (error) {
+          console.error('Equipment input error:', error);
+        }
+      };
+
+      // Live source input handler
+      const handleLiveSourceInput = (index, field, value) => {
+        try {
+          const updatedLiveSource = [...formData.liveSource];
+          if (field === 'value' && index === 3) {
+            updatedLiveSource[index].value = value;
+            updatedLiveSource[index].source = value ? `${updatedLiveSource[index].unit} ${value}` : '';
+          } else if (field === 'notes') {
+            updatedLiveSource[index].notes = value;
+          } else {
+            updatedLiveSource[index][field] = value;
+          }
+          setFormData({ ...formData, liveSource: updatedLiveSource });
+        } catch (error) {
+          console.error('Live source input error:', error);
+        }
+      };
+
+      // Power input handler
+      const handlePowerInput = (index, field, value) => {
+        try {
+          const updatedPower = [...formData.power];
+          updatedPower[index][field] = value;
+          setFormData({ ...formData, power: updatedPower });
+        } catch (error) {
+          console.error('Power input error:', error);
+        }
+      };
+
+      // Form submission handler
+      const handleSubmit = (e) => {
+        try {
+          e.preventDefault();
+          console.log('Form Data:', formData);
+          alert('Form submitted successfully! Check console for form data.');
+        } catch (error) {
+          console.error('Submit error:', error);
+        }
+      };
+
+      // Date and time formatter
+      const getFormattedDateTime = () => {
+        try {
+          const now = new Date();
+          const day = String(now.getDate()).padStart(2, '0');
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const year = now.getFullYear();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          return {
+            fileTimestamp: `${day}-${month}-${year}_${hours}-${minutes}`,
+            displayTimestamp: `${day}-${month}-${year} ${hours}:${minutes}`
+          };
+        } catch (error) {
+          console.error('Date format error:', error);
+          return { fileTimestamp: 'error', displayTimestamp: 'error' };
+        }
+      };
+
+      // PDF generation
+      const generatePDF = () => {
+        try {
+          if (!window.jspdf || !window.jspdf.jsPDF) {
+            throw new Error('jsPDF not loaded');
+          }
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a3'
+          });
+
+          const margin = 10;
+          let y = 10;
+          const pageWidth = 297;
+
+          const { fileTimestamp, displayTimestamp } = getFormattedDateTime();
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(16);
+          doc.setTextColor(0, 102, 204);
+          const headerText = `Network18 Event Report ${displayTimestamp}`;
+          const headerWidth = doc.getTextWidth(headerText);
+          doc.text(headerText, (pageWidth - headerWidth) / 2, y);
+          y += 10;
+
+          doc.setFontSize(12);
+          if (formData.daySelection !== 'Select') {
+            doc.text(`Day: ${formData.daySelection}`, margin, y);
+          }
+          if (formData.createdBy) {
+            doc.text(`Created By: ${formData.createdBy}`, pageWidth - margin - 60, y);
+          }
+          y += 10;
+
+          doc.setFontSize(12);
+          doc.setTextColor(0);
+          doc.text('Event Details', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          const eventDetails = [
+            { label: 'Event Name', value: formData.eventName },
+            { label: 'Date', value: formData.date },
+            { label: 'Channel', value: formData.channel },
+            { label: 'Location', value: formData.location },
+            { label: 'City', value: formData.city },
+            { label: 'Show Category', value: formData.showCategory },
+            { label: 'Show Type', value: formData.showType },
+            { label: 'Show Setup', value: formData.showSetup }
+          ];
+          eventDetails.forEach((item, index) => {
+            const col = index % 2 === 0 ? 0 : 140;
+            const row = Math.floor(index / 2);
+            doc.text(`${item.label}: ${item.value || ''}`, margin + col, y + row * 5);
+          });
+          y += Math.ceil(eventDetails.length / 2) * 5 + 4;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Team Details', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          const teamDetails = [
+            { label: 'Event Engineer', value: formData.eventEngineer },
+            { label: 'Show Producer', value: formData.showProducer },
+            { label: 'Show DOP', value: formData.showDop },
+            { label: 'Online Editor', value: formData.onlineEditor },
+            { label: 'Electrical', value: formData.electrical },
+            { label: 'Sound Engineer', value: formData.soundEngineer },
+            { label: 'Production Control', value: formData.productionControl }
+          ];
+          teamDetails.forEach((item, index) => {
+            const col = index % 2 === 0 ? 0 : 140;
+            const row = Math.floor(index / 2);
+            doc.text(`${item.label}: ${item.value || ''}`, margin + col, y + row * 5);
+          });
+          y += Math.ceil(teamDetails.length / 2) * 5 + 4;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Event Timing', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          const eventTiming = [
+            { label: 'Installation Time', value: formData.installationTime },
+            { label: 'Checking Done', value: formData.checkingDone },
+            { label: 'Event Start Time', value: formData.eventStartTime },
+            { label: 'Event End Time', value: formData.eventEndTime },
+            { label: 'Feed Test & Location', value: formData.feedTestLocation },
+            { label: 'Event Duration', value: formData.eventDuration }
+          ];
+          eventTiming.forEach((item, index) => {
+            const col = index % 2 === 0 ? 0 : 140;
+            const row = Math.floor(index / 2);
+            doc.text(`${item.label}: ${item.value || ''}`, margin + col, y + row * 5);
+          });
+          y += Math.ceil(eventTiming.length / 2) * 5 + 4;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Equipment', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.autoTable({
+            startY: y,
+            head: [['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Vendor Name', 'Remarks', 'Status']],
+            body: formData.equipment.map((item, index) => [
+              index + 1,
+              item.name,
+              item.modelNo || '',
+              item.qty,
+              item.installationTime || '',
+              item.doneTime || '',
+              item.inHouse ? 'Yes' : '',
+              item.hired ? 'Yes' : '',
+              item.hired ? item.vendorName || '' : '',
+              item.remarks,
+              item.status
+            ]),
+            theme: 'grid',
+            styles: { fontSize: 7, cellPadding: 1.5, textColor: [0, 0, 0], halign: 'left' },
+            headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255], halign: 'center' },
+            columnStyles: {
+              0: { cellWidth: 15, halign: 'center' },
+              1: { cellWidth: 35 },
+              2: { cellWidth: 30 },
+              3: { cellWidth: 20 },
+              4: { cellWidth: 25 },
+              5: { cellWidth: 25 },
+              6: { cellWidth: 20 },
+              7: { cellWidth: 20 },
+              8: { cellWidth: 30 },
+              9: { cellWidth: 30 },
+              10: { cellWidth: 20 }
+            },
+            margin: { left: margin, right: margin }
+          });
+          y = doc.lastAutoTable.finalY + 4;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Live Source', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.autoTable({
+            startY: y,
+            head: [['Sr.No.', 'Name', 'Available', 'Source', 'Bandwidth', 'Note', 'Status']],
+            body: formData.liveSource.map((item, index) => [
+              index + 1,
+              item.name,
+              item.available === 'Yes' ? 'Yes' : item.available === 'No' ? 'No' : '',
+              item.source || (item.unit && item.value ? item.unit : ''),
+              item.value || '',
+              item.notes || '',
+              item.status || ''
+            ]),
+            theme: 'grid',
+            styles: { fontSize: 7, cellPadding: 1.5, textColor: [0, 0, 0], halign: 'left' },
+            headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255], halign: 'center' },
+            columnStyles: {
+              0: { cellWidth: 15, halign: 'center' },
+              1: { cellWidth: 50 },
+              2: { cellWidth: 35 },
+              3: { cellWidth: 35 },
+              4: { cellWidth: 35 },
+              5: { cellWidth: 35 },
+              6: { cellWidth: 35 }
+            },
+            margin: { left: margin, right: margin }
+          });
+          y = doc.lastAutoTable.finalY + 4;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Electrical Power Source', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.autoTable({
+            startY: y,
+            head: [['Sr.No.', 'Source', 'Available', 'kVA', 'Enter Value', 'Note', 'Status']],
+            body: formData.power.map((item, index) => [
+              index + 1,
+              item.source,
+              item.available || '',
+              item.kVA || '',
+              item.enterValue || '',
+              item.note || '',
+              item.status || ''
+            ]),
+            theme: 'grid',
+            styles: { fontSize: 7, cellPadding: 1.5, textColor: [0, 0, 0], halign: 'left' },
+            headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255], halign: 'center' },
+            columnStyles: {
+              0: { cellWidth: 15, halign: 'center' },
+              1: { cellWidth: 50 },
+              2: { cellWidth: 35 },
+              3: { cellWidth: 35 },
+              4: { cellWidth: 35 },
+              5: { cellWidth: 35 },
+              6: { cellWidth: 35 }
+            },
+            margin: { left: margin, right: margin }
+          });
+          y = doc.lastAutoTable.finalY + 4;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Engineer Comments & Signature (Day 1)', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          const comments1 = doc.splitTextToSize(`Comments: ${formData.eventEngineerComments || ''}`, 277);
+          doc.text(comments1, margin, y);
+          y += comments1.length * 4 + 4;
+          doc.text(`Signature: ${formData.signature || ''}`, margin, y);
+          doc.text(`Date: ${formData.signatureDate || ''}`, margin + 140, y);
+          y += 8;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('Second Day Details', margin, y);
+          y += 2;
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 4;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          const secondDayDetails = [
+            { label: 'Date', value: formData.secondDate },
+            { label: 'Checking Done', value: formData.secondCheckingDone },
+            { label: 'Feed Test & Location', value: formData.secondFeedTestLocation },
+            { label: 'Event Duration', value: formData.secondEventDuration }
+          ];
+          secondDayDetails.forEach((item, index) => {
+            const col = index % 2 === 0 ? 0 : 140;
+            const row = Math.floor(index / 2);
+            doc.text(`${item.label}: ${item.value || ''}`, margin + col, y + row * 5);
+          });
+          y += Math.ceil(secondDayDetails.length / 2) * 5 + 4;
+          const comments2 = doc.splitTextToSize(`Comments: ${formData.secondEventEngineerComments || ''}`, 277);
+          doc.text(comments2, margin, y);
+          y += comments2.length * 4 + 4;
+          doc.text(`Signature: ${formData.secondSignature || ''}`, margin, y);
+          doc.text(`Date: ${formData.secondSignatureDate || ''}`, margin + 140, y);
+
+          doc.save(`Network18_Event_Report_${fileTimestamp}.pdf`);
+        } catch (error) {
+          console.error('PDF generation error:', error);
+          alert('Failed to generate PDF. Check console for details.');
+        }
+      };
+
+      // Excel generation
+      const generateExcel = () => {
+        try {
+          if (!window.XLSX) {
+            throw new Error('SheetJS not loaded');
+          }
+          const wb = XLSX.utils.book_new();
+          const wsData = [
+            ['Network 18 Event Report'],
+            ['Day Selection', formData.daySelection !== 'Select' ? formData.daySelection : null],
+            ['Created By', formData.createdBy || null],
+            ['Event Name', formData.eventName],
+            ['Date', formData.date],
+            ['Channel', formData.channel],
+            ['Location', formData.location],
+            ['City', formData.city],
+            ['Show Category', formData.showCategory],
+            ['Show Type', formData.showType],
+            ['Show Setup', formData.showSetup],
+            [],
+            ['Team Details'],
+            ['Event Engineer', formData.eventEngineer],
+            ['Show Producer', formData.showProducer],
+            ['Show DOP', formData.showDop],
+            ['Online Editor', formData.onlineEditor],
+            ['Electrical', formData.electrical],
+            ['Sound Engineer', formData.soundEngineer],
+            ['Production Control', formData.productionControl],
+            [],
+            ['Event Timing'],
+            ['Installation Time', formData.installationTime],
+            ['Checking Done', formData.checkingDone],
+            ['Event Start Time', formData.eventStartTime],
+            ['Event End Time', formData.eventEndTime],
+            ['Feed Test & Location', formData.feedTestLocation],
+            ['Event Duration', formData.eventDuration],
+            [],
+            ['Equipment'],
+            ['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Vendor Name', 'Remarks', 'Status'],
+            ...formData.equipment.map((item, index) => [
+              index + 1,
+              item.name,
+              item.modelNo,
+              item.qty,
+              item.installationTime,
+              item.doneTime,
+              item.inHouse ? 'Yes' : '',
+              item.hired ? 'Yes' : '',
+              item.hired ? item.vendorName : '',
+              item.remarks,
+              item.status
+            ]),
+            [],
+            ['Live Source'],
+            ['Sr.No.', 'Name', 'Available', 'Source', 'Bandwidth', 'Note', 'Status'],
+            ...formData.liveSource.map((item, index) => [
+              index + 1,
+              item.name,
+              item.available,
+              item.source || (item.unit && item.value ? item.unit : ''),
+              item.value || '',
+              item.notes || '',
+              item.status || ''
+            ]),
+            [],
+            ['Electrical Power Source'],
+            ['Sr.No.', 'Source', 'Available', 'kVA', 'Enter Value', 'Note', 'Status'],
+            ...formData.power.map((item, index) => [
+              index + 1,
+              item.source,
+              item.available,
+              item.kVA,
+              item.enterValue,
+              item.note,
+              item.status
+            ]),
+            [],
+            ['Engineer Comments & Signature (Day 1)'],
+            ['Comments', formData.eventEngineerComments],
+            ['Signature', formData.signature],
+            ['Date', formData.signatureDate],
+            [],
+            ['Second Day Details'],
+            ['Date', formData.secondDate],
+            ['Checking Done', formData.secondCheckingDone],
+            ['Feed Test & Location', formData.secondFeedTestLocation],
+            ['Event Duration', formData.secondEventDuration],
+            ['Comments', formData.secondEventEngineerComments],
+            ['Signature', formData.secondSignature],
+            ['Date', formData.secondSignatureDate]
+          ];
+          const ws = XLSX.utils.aoa_to_sheet(wsData);
+          XLSX.utils.book_append_sheet(wb, ws, 'Event Report');
+          const { fileTimestamp } = getFormattedDateTime();
+          XLSX.writeFile(wb, `Network18_Event_Report_${fileTimestamp}.xlsx`);
+        } catch (error) {
+          console.error('Excel generation error:', error);
+          alert('Failed to generate Excel. Check console for details.');
+        }
+      };
+
+      // Render form
+      return (
+        <div className="max-w-full mx-auto p-8 bg-white rounded-xl shadow-2xl mt-8 border border-gray-200" style={{ maxWidth: '90vw' }}>
+          <h1 className="text-4xl font-bold text-center text-blue-700 mb-8">
+            Network 18 Event Report
+          </h1>
+          <div className="flex justify-between mb-8">
+            <div>
+              <label htmlFor="daySelection" className="mr-2 text-gray-700">Day:</label>
+              <select
+                name="daySelection"
+                value={formData.daySelection}
+                onChange={handleInputChange}
+                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="Select">Select</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="createdBy" className="mr-2 text-gray-700">Created By:</label>
+              <select
+                name="createdBy"
+                value={formData.createdBy}
+                onChange={handleInputChange}
+                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select</option>
+                <option value="Tyagi">Tyagi</option>
+                <option value="Kishor">Kishor</option>
+                <option value="Rajesh">Rajesh</option>
+                <option value="Virender">Virender</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Event Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="eventName" value={formData.eventName} onChange={handleInputChange} placeholder="Event Name" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="channel" value={formData.channel} onChange={handleInputChange} placeholder="Channel" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="Location" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="showCategory" value={formData.showCategory} onChange={handleInputChange} placeholder="Show Category" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="showType" value={formData.showType} onChange={handleInputChange} placeholder="Show Type" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="showSetup" value={formData.showSetup} onChange={handleInputChange} placeholder="Show Setup" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Team Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="eventEngineer" value={formData.eventEngineer} onChange={handleInputChange} placeholder="Event Engineer" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="showProducer" value={formData.showProducer} onChange={handleInputChange} placeholder="Show Producer" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="showDop" value={formData.showDop} onChange={handleInputChange} placeholder="Show DOP" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="onlineEditor" value={formData.onlineEditor} onChange={handleInputChange} placeholder="Online Editor" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="electrical" value={formData.electrical} onChange={handleInputChange} placeholder="Electrical" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="soundEngineer" value={formData.soundEngineer} onChange={handleInputChange} placeholder="Sound Engineer" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+                <input type="text" name="productionControl" value={formData.productionControl} onChange={handleInputChange} placeholder="Production Control" className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full" />
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Event Timing</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="installationTime" className="block text-sm font-medium text-gray-700 mb-1">Installation Time</label>
+                  <input
+                    type="time"
+                    name="installationTime"
+                    value={formData.installationTime}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="checkingDone" className="block text-sm font-medium text-gray-700 mb-1">Checking Done</label>
+                  <input
+                    type="time"
+                    name="checkingDone"
+                    value={formData.checkingDone}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="eventStartTime" className="block text-sm font-medium text-gray-700 mb-1">Event Start Time</label>
+                  <input
+                    type="time"
+                    name="eventStartTime"
+                    value={formData.eventStartTime}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="eventEndTime" className="block text-sm font-medium text-gray-700 mb-1">Event End Time</label>
+                  <input
+                    type="time"
+                    name="eventEndTime"
+                    value={formData.eventEndTime}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="feedTestLocation" className="block text-sm font-medium text-gray-700 mb-1">Feed Test & Location</label>
+                  <input
+                    type="time"
+                    name="feedTestLocation"
+                    value={formData.feedTestLocation}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="eventDuration" className="block text-sm font-medium text-gray-700 mb-1">Event Duration</label>
+                  <input
+                    type="time"
+                    name="eventDuration"
+                    value={formData.eventDuration}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Equipment</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr className="bg-blue-600 text-white">
+                      <th className="p-3 border-b text-center text-sm font-medium">Sr.No.</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Equipment</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Model No.</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Qty</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Installation Time</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Done Time</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">In-House</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Hired</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Vendor Name</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Remarks</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.equipment.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-100">
+                        <td className="p-3 border-b text-center">{index + 1}</td>
+                        <td className="p-3 border-b text-left">{item.name}</td>
+                        <td className="p-3 border-b">
+                          <input
+                            type="text"
+                            value={item.modelNo}
+                            onChange={(e) => handleEquipmentInput(index, 'modelNo', e.target.value)}
+                            placeholder="Model No."
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </td>
+                        <td className="p-3 border-b">
+                          <input
+                            type="text"
+                            value={item.qty}
+                            onChange={(e) => handleEquipmentInput(index, 'qty', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-24 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </td>
+                        <td className="p-3 border-b">
+                          <input
+                            type="time"
+                            value={item.installationTime}
+                            onChange={(e) => handleEquipmentInput(index, 'installationTime', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-20 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </td>
+                        <td className="p-3 border-b">
+                          <input
+                            type="time"
+                            value={item.doneTime}
+                            onChange={(e) => handleEquipmentInput(index, 'doneTime', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-20 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="checkbox"
+                            checked={item.inHouse}
+                            onChange={() => handleEquipmentCheckbox(index, 'inHouse')}
+                            className="h-4 w-4 text-blue-600 rounded"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="checkbox"
+                            checked={item.hired}
+                            onChange={() => handleEquipmentCheckbox(index, 'hired')}
+                            className="h-4 w-4 text-blue-600 rounded"
+                          />
+                        </td>
+                        <td className="p-3 border-b">
+                          {item.hired ? (
+                            <input
+                              type="text"
+                              value={item.vendorName}
+                              onChange={(e) => handleEquipmentInput(index, 'vendorName', e.target.value)}
+                              placeholder="Vendor Name"
+                              className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <span>-</span>
+                          )}
+                        </td>
+                        <td className="p-3 border-b">
+                          <input
+                            type="text"
+                            value={item.remarks}
+                            onChange={(e) => handleEquipmentInput(index, 'remarks', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </td>
+                        <td className="p-3 border-b">
+                          <input
+                            type="text"
+                            value={item.status}
+                            onChange={(e) => handleEquipmentInput(index, 'status', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Live Source</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr className="bg-blue-600 text-white">
+                      <th className="p-3 border-b text-center text-sm font-medium">Sr.No.</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Name</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Available</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Source</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Bandwidth</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Note</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.liveSource.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-100">
+                        <td className="p-3 border-b text-center">{index + 1}</td>
+                        <td className="p-3 border-b text-left">{item.name}</td>
+                        <td className="p-3 border-b text-center">
+                          <select
+                            value={item.available}
+                            onChange={(e) => handleLiveSourceInput(index, 'available', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                          >
+                            <option value="Select">Select</option>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                          </select>
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          {index < 3 ? (
+                            <select
+                              value={item.source}
+                              onChange={(e) => handleLiveSourceInput(index, 'source', e.target.value)}
+                              className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            >
+                              <option value="">Select</option>
+                              <option value="LiveU">LiveU</option>
+                              <option value="OB">OB</option>
+                            </select>
+                          ) : (
+                            <select
+                              value={item.unit}
+                              onChange={(e) => handleLiveSourceInput(index, 'unit', e.target.value)}
+                              className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            >
+                              <option value="Mbps">Mbps</option>
+                              <option value="Gbps">Gbps</option>
+                            </select>
+                          )}
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.value}
+                            onChange={(e) => handleLiveSourceInput(index, 'value', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="Bandwidth"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.notes}
+                            onChange={(e) => handleLiveSourceInput(index, 'notes', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="Enter Note"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.status}
+                            onChange={(e) => handleLiveSourceInput(index, 'status', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="Status"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Electrical Power Source</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead>
+                    <tr className="bg-blue-600 text-white">
+                      <th className="p-3 border-b text-center text-sm font-medium">Sr.No.</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Source</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Available</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">kVA</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Enter Value</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Note</th>
+                      <th className="p-3 border-b text-center text-sm font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.power.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-100">
+                        <td className="p-3 border-b text-center">{index + 1}</td>
+                        <td className="p-3 border-b text-left">{item.source}</td>
+                        <td className="p-3 border-b text-center">
+                          <select
+                            value={item.available}
+                            onChange={(e) => handlePowerInput(index, 'available', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                          >
+                            <option value="">Select</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                          </select>
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.kVA}
+                            onChange={(e) => handlePowerInput(index, 'kVA', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="kVA"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.enterValue}
+                            onChange={(e) => handlePowerInput(index, 'enterValue', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="Enter Value"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.note}
+                            onChange={(e) => handlePowerInput(index, 'note', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="Note"
+                          />
+                        </td>
+                        <td className="p-3 border-b text-center">
+                          <input
+                            type="text"
+                            value={item.status}
+                            onChange={(e) => handlePowerInput(index, 'status', e.target.value)}
+                            className="p-2 border border-gray-300 rounded w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            placeholder="Status"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Engineer Comments & Signature (Day 1)</h2>
+              <textarea
+                name="eventEngineerComments"
+                value={formData.eventEngineerComments}
+                onChange={handleInputChange}
+                placeholder="Event Engineer Comments & Remarks"
+                className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full h-20"
+              ></textarea>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <input
+                  type="text"
+                  name="signature"
+                  value={formData.signature}
+                  onChange={handleInputChange}
+                  placeholder="Signature"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+                <input
+                  type="date"
+                  name="signatureDate"
+                  value={formData.signatureDate}
+                  onChange={handleInputChange}
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+              </div>
+            </div>
+            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Second Day Details (Optional)</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="date"
+                  name="secondDate"
+                  value={formData.secondDate}
+                  onChange={handleInputChange}
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+                <input
+                  type="text"
+                  name="secondCheckingDone"
+                  value={formData.secondCheckingDone}
+                  onChange={handleInputChange}
+                  placeholder="Checking Done"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+                <input
+                  type="text"
+                  name="secondFeedTestLocation"
+                  value={formData.secondFeedTestLocation}
+                  onChange={handleInputChange}
+                  placeholder="Feed Test & Location"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+                <input
+                  type="text"
+                  name="secondEventDuration"
+                  value={formData.secondEventDuration}
+                  onChange={handleInputChange}
+                  placeholder="Event Duration"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+              </div>
+              <textarea
+                name="secondEventEngineerComments"
+                value={formData.secondEventEngineerComments}
+                onChange={handleInputChange}
+                placeholder="Event Engineer Comments & Remarks (Day 2)"
+                className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full h-20 mt-4"
+              ></textarea>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <input
+                  type="text"
+                  name="secondSignature"
+                  value={formData.secondSignature}
+                  onChange={handleInputChange}
+                  placeholder="Signature"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+                <input
+                  type="date"
+                  name="secondSignatureDate"
+                  value={formData.secondSignatureDate}
+                  onChange={handleInputChange}
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+              </div>
+            </div>
+            <div className="text-center space-x-4 mt-8">
+              <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 shadow-md">
+                Submit Form
+              </button>
+              <button type="button" onClick={generatePDF} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+                Download PDF
+              </button>
+              <button type="button" onClick={generateExcel} className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200 shadow-md">
+                Download Excel
+              </button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    // Render with error boundary
+    try {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(
+        <ErrorBoundary>
+          <EventReportForm />
+        </ErrorBoundary>
+      );
+    } catch (error) {
+      console.error('Render error:', error);
+      document.getElementById('error').className = 'text-red-600 p-4';
+      document.getElementById('error').innerText = `Failed to render: ${error.message}`;
+    }
+  </script>
+</body>
+</html>
