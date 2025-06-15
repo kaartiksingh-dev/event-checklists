@@ -65,17 +65,14 @@
     // Error Boundary Component
     class ErrorBoundary extends React.Component {
       state = { hasError: false, error: null };
-
       static getDerivedStateFromError(error) {
         return { hasError: true, error };
       }
-
       componentDidCatch(error, errorInfo) {
         console.error('Error caught by boundary:', error, errorInfo);
         document.getElementById('error').className = 'text-red-600 p-4';
         document.getElementById('error').innerText = `Error: ${error.message}`;
       }
-
       render() {
         if (this.state.hasError) {
           return <h1>Something went wrong. Check the console for details.</h1>;
@@ -86,7 +83,6 @@
 
     // Main EventReportForm component
     function EventReportForm() {
-      // Form state
       const [formData, setFormData] = React.useState({
         daySelection: 'Select',
         createdBy: '',
@@ -108,6 +104,7 @@
         installationTime: '',
         checkingDone: '',
         feedTestLocation: '',
+        feedTestTime: '', // New field for time picker
         eventStartTime: '',
         eventEndTime: '',
         eventDuration: '',
@@ -151,13 +148,13 @@
         secondDate: '',
         secondCheckingDone: '',
         secondFeedTestLocation: '',
+        secondFeedTestTime: '', // New field for second day time picker
         secondEventDuration: '',
         secondEventEngineerComments: '',
         secondSignature: '',
         secondSignatureDate: ''
       });
 
-      // Input change handler
       const handleInputChange = (e) => {
         try {
           const { name, value } = e.target;
@@ -167,7 +164,6 @@
         }
       };
 
-      // Equipment checkbox handler
       const handleEquipmentCheckbox = (index, field) => {
         try {
           const updatedEquipment = [...formData.equipment];
@@ -181,7 +177,6 @@
         }
       };
 
-      // Equipment input handler
       const handleEquipmentInput = (index, field, value) => {
         try {
           const updatedEquipment = [...formData.equipment];
@@ -192,7 +187,6 @@
         }
       };
 
-      // Live source input handler
       const handleLiveSourceInput = (index, field, value) => {
         try {
           const updatedLiveSource = [...formData.liveSource];
@@ -210,7 +204,6 @@
         }
       };
 
-      // Power input handler
       const handlePowerInput = (index, field, value) => {
         try {
           const updatedPower = [...formData.power];
@@ -221,7 +214,6 @@
         }
       };
 
-      // Form submission handler
       const handleSubmit = (e) => {
         try {
           e.preventDefault();
@@ -232,7 +224,6 @@
         }
       };
 
-      // Date and time formatter
       const getFormattedDateTime = () => {
         try {
           const now = new Date();
@@ -251,12 +242,27 @@
         }
       };
 
-      // PDF generation
-      const generatePDF = () => {
+      const loadImage = (url) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = (e) => reject(new Error('Failed to load image: ' + e.message));
+          img.src = url;
+        });
+      };
+
+      const generatePDF = async () => {
         try {
-          if (!window.jspdf || !window.jspdf.jsPDF) {
-            throw new Error('jsPDF not loaded');
+          if (!formData.eventName || !formData.date) {
+            alert('Please fill in Event Name and Date.');
+            return;
           }
+          if (!window.jspdf || !window.jspdf.jsPDF) {
+            alert('PDF library failed to load. Please check your internet connection and try again.');
+            throw new Error('jsPDF not loaded. Check CDN or network connectivity.');
+          }
+          console.log('Starting PDF generation...', formData);
           const { jsPDF } = window.jspdf;
           const doc = new jsPDF({
             orientation: 'portrait',
@@ -265,8 +271,20 @@
           });
 
           const margin = 10;
-          let y = 10;
+          let y = 15;
           const pageWidth = 297;
+
+          // Load and add image (left-aligned)
+          const imageUrl = './network18-logo.png';
+          try {
+            const img = await loadImage(imageUrl);
+            const imgWidth = 50;
+            const imgHeight = (img.height * imgWidth) / img.width;
+            doc.addImage(img, 'PNG', margin, y, imgWidth, imgHeight);
+            y += imgHeight + 5;
+          } catch (error) {
+            console.warn('Image loading failed:', error.message);
+          }
 
           const { fileTimestamp, displayTimestamp } = getFormattedDateTime();
           doc.setFont('helvetica', 'bold');
@@ -346,9 +364,10 @@
           const eventTiming = [
             { label: 'Installation Time', value: formData.installationTime },
             { label: 'Checking Done', value: formData.checkingDone },
+            { label: 'Feed Test Location', value: formData.feedTestLocation },
+            { label: 'Feed Test Time', value: formData.feedTestTime },
             { label: 'Event Start Time', value: formData.eventStartTime },
             { label: 'Event End Time', value: formData.eventEndTime },
-            { label: 'Feed Test & Location', value: formData.feedTestLocation },
             { label: 'Event Duration', value: formData.eventDuration }
           ];
           eventTiming.forEach((item, index) => {
@@ -364,38 +383,66 @@
           y += 2;
           doc.line(margin, y, pageWidth - margin, y);
           y += 4;
-          doc.autoTable({
-            startY: y,
-            head: [['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Vendor Name', 'Remarks', 'Status']],
-            body: formData.equipment.map((item, index) => [
+
+          const hasHiredEquipment = formData.equipment.some(item => item.hired);
+          const tableHeaders = hasHiredEquipment
+            ? [['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Vendor Name', 'Remarks', 'Status']]
+            : [['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Remarks', 'Status']];
+
+          const tableBody = formData.equipment.map((item, index) => {
+            const baseRow = [
               index + 1,
-              item.name,
+              item.name || '',
               item.modelNo || '',
-              item.qty,
+              item.qty || '',
               item.installationTime || '',
               item.doneTime || '',
               item.inHouse ? 'Yes' : '',
               item.hired ? 'Yes' : '',
-              item.hired ? item.vendorName || '' : '',
-              item.remarks,
-              item.status
-            ]),
+              item.remarks || '',
+              item.status || ''
+            ];
+            if (hasHiredEquipment) {
+              baseRow.splice(8, 0, item.hired ? item.vendorName || '' : '');
+            }
+            return baseRow;
+          });
+
+          const columnStyles = hasHiredEquipment
+            ? {
+                0: { cellWidth: 15, halign: 'center' },
+                1: { cellWidth: 35 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 20 },
+                4: { cellWidth: 25 },
+                5: { cellWidth: 25 },
+                6: { cellWidth: 20 },
+                7: { cellWidth: 20 },
+                8: { cellWidth: 30 },
+                9: { cellWidth: 30 },
+                10: { cellWidth: 20 }
+              }
+            : {
+                0: { cellWidth: 15, halign: 'center' },
+                1: { cellWidth: 35 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 20 },
+                4: { cellWidth: 25 },
+                5: { cellWidth: 25 },
+                6: { cellWidth: 20 },
+                7: { cellWidth: 20 },
+                8: { cellWidth: 30 },
+                9: { cellWidth: 20 }
+              };
+
+          doc.autoTable({
+            startY: y,
+            head: tableHeaders,
+            body: tableBody,
             theme: 'grid',
             styles: { fontSize: 7, cellPadding: 1.5, textColor: [0, 0, 0], halign: 'left' },
             headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255], halign: 'center' },
-            columnStyles: {
-              0: { cellWidth: 15, halign: 'center' },
-              1: { cellWidth: 35 },
-              2: { cellWidth: 30 },
-              3: { cellWidth: 20 },
-              4: { cellWidth: 25 },
-              5: { cellWidth: 25 },
-              6: { cellWidth: 20 },
-              7: { cellWidth: 20 },
-              8: { cellWidth: 30 },
-              9: { cellWidth: 30 },
-              10: { cellWidth: 20 }
-            },
+            columnStyles: columnStyles,
             margin: { left: margin, right: margin }
           });
           y = doc.lastAutoTable.finalY + 4;
@@ -411,7 +458,7 @@
             head: [['Sr.No.', 'Name', 'Available', 'Source', 'Bandwidth', 'Note', 'Status']],
             body: formData.liveSource.map((item, index) => [
               index + 1,
-              item.name,
+              item.name || '',
               item.available === 'Yes' ? 'Yes' : item.available === 'No' ? 'No' : '',
               item.source || (item.unit && item.value ? item.unit : ''),
               item.value || '',
@@ -445,7 +492,7 @@
             head: [['Sr.No.', 'Source', 'Available', 'kVA', 'Enter Value', 'Note', 'Status']],
             body: formData.power.map((item, index) => [
               index + 1,
-              item.source,
+              item.source || '',
               item.available || '',
               item.kVA || '',
               item.enterValue || '',
@@ -494,7 +541,8 @@
           const secondDayDetails = [
             { label: 'Date', value: formData.secondDate },
             { label: 'Checking Done', value: formData.secondCheckingDone },
-            { label: 'Feed Test & Location', value: formData.secondFeedTestLocation },
+            { label: 'Feed Test Location', value: formData.secondFeedTestLocation },
+            { label: 'Feed Test Time', value: formData.secondFeedTestTime },
             { label: 'Event Duration', value: formData.secondEventDuration }
           ];
           secondDayDetails.forEach((item, index) => {
@@ -509,20 +557,48 @@
           doc.text(`Signature: ${formData.secondSignature || ''}`, margin, y);
           doc.text(`Date: ${formData.secondSignatureDate || ''}`, margin + 140, y);
 
+          console.log('PDF generated successfully');
           doc.save(`Network18_Event_Report_${fileTimestamp}.pdf`);
         } catch (error) {
-          console.error('PDF generation error:', error);
-          alert('Failed to generate PDF. Check console for details.');
+          console.error('PDF generation error:', error.stack);
+          alert('Failed to generate PDF: ' + error.message);
         }
       };
 
-      // Excel generation
       const generateExcel = () => {
         try {
-          if (!window.XLSX) {
-            throw new Error('SheetJS not loaded');
+          if (!formData.eventName || !formData.date) {
+            alert('Please fill in Event Name and Date.');
+            return;
           }
+          if (!window.XLSX) {
+            alert('Excel library failed to load. Please check your internet connection and try again.');
+            throw new Error('SheetJS not loaded. Check CDN or network connectivity.');
+          }
+          console.log('Starting Excel generation...', formData);
           const wb = XLSX.utils.book_new();
+          const hasHiredEquipment = formData.equipment.some(item => item.hired);
+          const equipmentHeaders = hasHiredEquipment
+            ? ['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Vendor Name', 'Remarks', 'Status']
+            : ['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Remarks', 'Status'];
+          const equipmentData = formData.equipment.map((item, index) => {
+            const baseRow = [
+              index + 1,
+              item.name || '',
+              item.modelNo || '',
+              item.qty || '',
+              item.installationTime || '',
+              item.doneTime || '',
+              item.inHouse ? 'Yes' : '',
+              item.hired ? 'Yes' : '',
+              item.remarks || '',
+              item.status || ''
+            ];
+            if (hasHiredEquipment) {
+              baseRow.splice(8, 0, item.hired ? item.vendorName || '' : '');
+            }
+            return baseRow;
+          });
           const wsData = [
             ['Network 18 Event Report'],
             ['Day Selection', formData.daySelection !== 'Select' ? formData.daySelection : null],
@@ -548,33 +624,22 @@
             ['Event Timing'],
             ['Installation Time', formData.installationTime],
             ['Checking Done', formData.checkingDone],
+            ['Feed Test Location', formData.feedTestLocation],
+            ['Feed Test Time', formData.feedTestTime],
             ['Event Start Time', formData.eventStartTime],
             ['Event End Time', formData.eventEndTime],
-            ['Feed Test & Location', formData.feedTestLocation],
             ['Event Duration', formData.eventDuration],
             [],
             ['Equipment'],
-            ['Sr.No.', 'Equipment', 'Model No.', 'Qty', 'Installation Time', 'Done Time', 'In-House', 'Hired', 'Vendor Name', 'Remarks', 'Status'],
-            ...formData.equipment.map((item, index) => [
-              index + 1,
-              item.name,
-              item.modelNo,
-              item.qty,
-              item.installationTime,
-              item.doneTime,
-              item.inHouse ? 'Yes' : '',
-              item.hired ? 'Yes' : '',
-              item.hired ? item.vendorName : '',
-              item.remarks,
-              item.status
-            ]),
+            equipmentHeaders,
+            ...equipmentData,
             [],
             ['Live Source'],
             ['Sr.No.', 'Name', 'Available', 'Source', 'Bandwidth', 'Note', 'Status'],
             ...formData.liveSource.map((item, index) => [
               index + 1,
-              item.name,
-              item.available,
+              item.name || '',
+              item.available || '',
               item.source || (item.unit && item.value ? item.unit : ''),
               item.value || '',
               item.notes || '',
@@ -585,12 +650,12 @@
             ['Sr.No.', 'Source', 'Available', 'kVA', 'Enter Value', 'Note', 'Status'],
             ...formData.power.map((item, index) => [
               index + 1,
-              item.source,
-              item.available,
-              item.kVA,
-              item.enterValue,
-              item.note,
-              item.status
+              item.source || '',
+              item.available || '',
+              item.kVA || '',
+              item.enterValue || '',
+              item.note || '',
+              item.status || ''
             ]),
             [],
             ['Engineer Comments & Signature (Day 1)'],
@@ -601,28 +666,45 @@
             ['Second Day Details'],
             ['Date', formData.secondDate],
             ['Checking Done', formData.secondCheckingDone],
-            ['Feed Test & Location', formData.secondFeedTestLocation],
+            ['Feed Test Location', formData.secondFeedTestLocation],
+            ['Feed Test Time', formData.secondFeedTestTime],
             ['Event Duration', formData.secondEventDuration],
             ['Comments', formData.secondEventEngineerComments],
             ['Signature', formData.secondSignature],
             ['Date', formData.secondSignatureDate]
           ];
+          console.log('wsData:', wsData);
           const ws = XLSX.utils.aoa_to_sheet(wsData);
           XLSX.utils.book_append_sheet(wb, ws, 'Event Report');
           const { fileTimestamp } = getFormattedDateTime();
+          console.log('Excel generated successfully');
           XLSX.writeFile(wb, `Network18_Event_Report_${fileTimestamp}.xlsx`);
         } catch (error) {
-          console.error('Excel generation error:', error);
-          alert('Failed to generate Excel. Check console for details.');
+          console.error('Excel generation error:', error.stack);
+          alert('Failed to generate Excel: ' + error.message);
         }
       };
 
-      // Render form
       return (
         <div className="max-w-full mx-auto p-8 bg-white rounded-xl shadow-2xl mt-8 border border-gray-200" style={{ maxWidth: '90vw' }}>
+          <div className="flex justify-start mb-8">
+            <img
+              src="NW18.png"
+              alt="Network18 Logo"
+              className="h-12"
+            />
+          </div>
           <h1 className="text-4xl font-bold text-center text-blue-700 mb-8">
             Network 18 Event Report
           </h1>
+          <div className="flex justify-center mb-8 space-x-4">
+            <button type="button" onClick={generatePDF} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+              Download PDF
+            </button>
+            <button type="button" onClick={generateExcel} className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200 shadow-md">
+              Download Excel
+            </button>
+          </div>
           <div className="flex justify-between mb-8">
             <div>
               <label htmlFor="daySelection" className="mr-2 text-gray-700">Day:</label>
@@ -654,7 +736,7 @@
               </select>
             </div>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form className="space-y-8">
             <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Event Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -704,6 +786,27 @@
                   />
                 </div>
                 <div>
+                  <label htmlFor="feedTestLocation" className="block text-sm font-medium text-gray-700 mb-1">Feed Test Location</label>
+                  <input
+                    type="text"
+                    name="feedTestLocation"
+                    value={formData.feedTestLocation}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                    placeholder="Feed Test Location"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="feedTestTime" className="block text-sm font-medium text-gray-700 mb-1">Feed Test Time</label>
+                  <input
+                    type="time"
+                    name="feedTestTime"
+                    value={formData.feedTestTime}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <div>
                   <label htmlFor="eventStartTime" className="block text-sm font-medium text-gray-700 mb-1">Event Start Time</label>
                   <input
                     type="time"
@@ -724,23 +827,14 @@
                   />
                 </div>
                 <div>
-                  <label htmlFor="feedTestLocation" className="block text-sm font-medium text-gray-700 mb-1">Feed Test & Location</label>
-                  <input
-                    type="time"
-                    name="feedTestLocation"
-                    value={formData.feedTestLocation}
-                    onChange={handleInputChange}
-                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                  />
-                </div>
-                <div>
                   <label htmlFor="eventDuration" className="block text-sm font-medium text-gray-700 mb-1">Event Duration</label>
                   <input
-                    type="time"
+                    type="text"
                     name="eventDuration"
                     value={formData.eventDuration}
                     onChange={handleInputChange}
                     className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                    placeholder="Event Duration (e.g., 2 hours)"
                   />
                 </div>
               </div>
@@ -1062,7 +1156,14 @@
                   name="secondFeedTestLocation"
                   value={formData.secondFeedTestLocation}
                   onChange={handleInputChange}
-                  placeholder="Feed Test & Location"
+                  placeholder="Feed Test Location"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                />
+                <input
+                  type="time"
+                  name="secondFeedTestTime"
+                  value={formData.secondFeedTestTime}
+                  onChange={handleInputChange}
                   className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
                 />
                 <input
@@ -1099,23 +1200,11 @@
                 />
               </div>
             </div>
-            <div className="text-center space-x-4 mt-8">
-              <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 shadow-md">
-                Submit Form
-              </button>
-              <button type="button" onClick={generatePDF} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
-                Download PDF
-              </button>
-              <button type="button" onClick={generateExcel} className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200 shadow-md">
-                Download Excel
-              </button>
-            </div>
           </form>
         </div>
       );
     }
 
-    // Render with error boundary
     try {
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(

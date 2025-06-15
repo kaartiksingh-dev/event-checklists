@@ -19,62 +19,56 @@
       max-width: 100%;
       overflow-x: auto;
     }
-    h1 {
+    
+    /* Header Section Styles */
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .logo-container {
+      /* Logo stays on left */
+    }
+    
+    .header-title-container {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+      pointer-events: none; /* Allows clicks to pass through to elements below */
+    }
+    
+    .header-title {
       color: #2c3e50;
-      text-align: center;
-      margin-bottom: 20px;
       font-size: 24px;
+      margin: 0;
+      display: inline-block; /* Needed for text-align center to work */
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    
+    .header-controls {
+      margin-left: auto; /* Pushes controls to the right */
+    }
+    
+    .logo {
+      height: 50px;
+      width: auto;
+    }
+    
+    /* Button Group Styles */
+    .button-group-section {
       margin-bottom: 20px;
-      background: #fff;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-      font-size: 12px;
-      vertical-align: middle;
-    }
-    td:nth-child(3) { text-align: left; }
-    th:nth-child(3) { text-align: center; }
-    th {
-      background-color: #2c3e50;
-      color: white;
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-    tr:nth-child(even) { background-color: #f9f9f9; }
-    tr:hover { background-color: #f1f1f1; }
-    select, input[type="text"], input[type="time"], textarea {
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 12px;
-      box-sizing: border-box;
-    }
-    select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3e%3c/svg%3e");
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      background-size: 12px;
-      padding-right: 24px;
-    }
+    
     .button-group {
       display: flex;
       gap: 10px;
-      margin-bottom: 20px;
       flex-wrap: wrap;
       justify-content: center;
     }
+    
     button {
       padding: 10px 20px;
       background-color: #2c3e50;
@@ -86,30 +80,238 @@
       font-size: 14px;
       transition: background-color 0.3s;
     }
+    
     button:hover { background-color: #1a252f; }
     button:focus {
       outline: 2px solid #2c3e50;
       outline-offset: 2px;
     }
-    @media print {
-      body { background: white; padding: 0; }
-      .button-group { display: none; }
-      table { box-shadow: none; }
-      .notes-section { display: block; }
-      .checked-by-container {
-        display: flex;
-        justify-content: flex-start;
-        flex-wrap: nowrap;
-        width: 200px;
-        margin: 5px 20px 10px auto;
-        position: relative;
-        top: 0;
-        right: 0;
-      }
-      .checked-by-container label {
-        white-space: nowrap;
-      }
+    
+    /* Column Toggle Styles */
+    .column-toggle-section {
+      margin-bottom: 15px;
     }
+    
+    .header-checkbox-row {
+      display: flex;
+      background: #2c3e50;
+      padding: 5px 0;
+    }
+    
+    .header-checkbox-cell {
+      flex: 1;
+      text-align: center;
+      min-width: 50px;
+    }
+    
+    .header-checkbox {
+      margin: 0 auto;
+    }
+    
+    .header-checkbox-label {
+      color: white;
+      font-size: 10px;
+      display: block;
+      margin-top: 2px;
+    }
+    
+    /* Table Styles */
+    .table-section {
+      margin-bottom: 20px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    
+    td:nth-child(3) { text-align: left; }
+    th:nth-child(3) { text-align: center; }
+    
+    th {
+      background-color: #2c3e50;
+      color: white;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: #f1f1f1; }
+    
+    /* Form Elements */
+    select, input[type="text"], input[type="time"], textarea {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 12px;
+      padding-right: 24px;
+    }
+    
+    .compact-select {
+      font-size: 11px;
+      padding: 4px;
+    }
+    
+    input[type="checkbox"] {
+      transform: scale(1.2);
+      margin: 0;
+    }
+    
+    /* Notes Section */
+    .notes-section {
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .notes-section h3 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    
+    .notes-section textarea {
+      width: 100%;
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    /* Checked By Container */
+    .checked-by-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .checked-by-container label {
+      font-size: 14px;
+      color: #2c3e50;
+      white-space: nowrap;
+    }
+    
+    .checked-by-container select {
+      width: 150px;
+      font-size: 14px;
+    }
+    
+    /* Status Colors */
+    .status-ok {
+      background-color: #28a745;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-standby {
+      background-color: #ffc107;
+      color: #212529;
+      font-weight: normal;
+    }
+    
+    .status-fault {
+      background-color: #fd7e14;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-not-working {
+      background-color: #dc3545;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-off {
+      background-color: #ff69b4;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-under-maintenance {
+      background-color: #800080;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-needs-repair {
+      background-color: #0000FF;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-testing {
+      background-color: #00FFFF;
+      color: #212529;
+      font-weight: normal;
+    }
+    
+    .status-awaiting-parts {
+      background-color: #4B0082;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-calibrating {
+      background-color: #008080;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-out-of-service {
+      background-color: #6A5ACD;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-cube-a {
+      background-color: SandyBrown;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-cube-b {
+      background-color: Goldenrod;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-cube-c {
+      background-color: DarkGoldenrod;
+      color: white;
+      font-weight: normal;
+    }
+    
+    .status-cube-d {
+      background-color: Peru;
+      color: white;
+      font-weight: normal;
+    }
+    
+    /* Toast Notifications */
     .toast {
       position: fixed;
       bottom: 20px;
@@ -123,338 +325,251 @@
       transition: opacity 0.5s;
       font-size: 12px;
     }
+    
     .toast.error {
       background-color: #dc3545;
     }
+    
     .toast.warning {
       background-color: #ffc107;
       color: #333;
     }
+    
     .toast.info {
       background-color: #17a2b8;
     }
-    .status-ok {
-      background-color: #28a745;
-      color: white;
-      font-weight: normal;
-    }
-    .status-standby {
-      background-color: #ffc107;
-      color: #212529;
-      font-weight: normal;
-    }
-    .status-fault {
-      background-color: #fd7e14;
-      color: white;
-      font-weight: normal;
-    }
-    .status-not-working {
-      background-color: #dc3545;
-      color: white;
-      font-weight: normal;
-    }
-    .status-off {
-      background-color: #ff69b4;
-      color: white;
-      font-weight: normal;
-    }
-    .status-under-maintenance {
-      background-color: #800080;
-      color: white;
-      font-weight: normal;
-    }
-    .status-needs-repair {
-      background-color: #0000FF;
-      color: white;
-      font-weight: normal;
-    }
-    .status-testing {
-      background-color: #00FFFF;
-      color: #212529;
-      font-weight: normal;
-    }
-    .status-awaiting-parts {
-      background-color: #4B0082;
-      color: white;
-      font-weight: normal;
-    }
-    .status-calibrating {
-      background-color: #008080;
-      color: white;
-      font-weight: normal;
-    }
-    .status-out-of-service {
-      background-color: #6A5ACD;
-      color: white;
-      font-weight: normal;
-    }
-    .status-cube-a {
-      background-color: SandyBrown;
-      color: white;
-      font-weight: normal;
-    }
-    .status-cube-b {
-      background-color: Goldenrod;
-      color: white;
-      font-weight: normal;
-    }
-    .status-cube-c {
-      background-color: DarkGoldenrod;
-      color: white;
-      font-weight: normal;
-    }
-    .status-cube-d {
-      background-color: Peru;
-      color: white;
-      font-weight: normal;
-    }
-    input[type="checkbox"] {
-      transform: scale(1.2);
-      margin: 0;
-    }
-    .header-checkbox-row {
-      display: flex;
-      background: #2c3e50;
-      padding: 5px 0;
-    }
-    .header-checkbox-cell {
-      flex: 1;
-      text-align: center;
-      min-width: 50px;
-    }
-    .header-checkbox {
-      margin: 0 auto;
-    }
-    .header-checkbox-label {
-      color: white;
-      font-size: 10px;
-      display: block;
-      margin-top: 2px;
-    }
-    .compact-select {
-      font-size: 11px;
-      padding: 4px;
-    }
-    .generate-report-btn {
-      background-color: #17a2b8;
-    }
-    .generate-report-btn:hover {
-      background-color: #138496;
-    }
-    .notes-section {
-      margin-top: 20px;
-      background: #fff;
-      padding: 15px;
-      border-radius: 4px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    .notes-section h3 {
-      color: #2c3e50;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-    .notes-section textarea {
-      width: 100%;
-      min-height: 100px;
-      resize: vertical;
-    }
-    .checked-by-container {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 10px;
-      align-items: center;
-    }
-    .checked-by-container label {
-      margin-right: 10px;
-      font-size: 14px;
-      color: #2c3e50;
-      white-space: nowrap;
-    }
-    .checked-by-container select {
-      width: 150px;
-      font-size: 14px;
-    }
-    @media screen and (max-width: 768px) {
-      .checked-by-container {
-        justify-content: flex-start;
+    
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .header-title-container {
+        position: static;
+        order: -1;
+      }
+      
+      .header-controls {
+        margin-left: 0;
         width: 100%;
       }
+      
+      .checked-by-container {
+        width: 100%;
+      }
+      
       .checked-by-container select {
         width: 100%;
         max-width: 150px;
       }
+      
+      .logo {
+        height: 40px;
+      }
     }
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    .title-container {
-      flex: 1;
-      min-width: 300px;
+    
+    @media print {
+      .header-title-container {
+        position: static;
+        text-align: left;
+        padding-left: 60px; /* Make space for logo */
+      }
+      
+      .button-group-section, 
+      .column-toggle-section {
+        display: none !important;
+      }
+      
+      table { 
+        box-shadow: none; 
+      }
+      
+      .notes-section { 
+        display: block; 
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header-section">
-      <div class="title-container">
-        <h1>Noida Studio Displays (Barco, Pixel LED & LED TVs) Checklist</h1>
+    <!-- Header Section -->
+    <div class="header-container">
+      <div class="logo-container">
+        <img src="NW18.png"
+             alt="Network18 Logo" 
+             class="logo">
       </div>
-      <div class="checked-by-container">
-        <label for="checkedBy">Checked by:</label>
-        <select id="checkedBy">
-          <option value="Select" selected>Select</option>
-          <option value="Tyagi">Tyagi</option>
-          <option value="Kishor">Kishor</option>
-          <option value="Rajesh">Rajesh</option>
-          <option value="Virender">Virender</option>
-          <option value="Other">Other</option>
-        </select>
+      
+      <div class="header-title-container">
+        <h1 class="header-title">Noida Studio Displays (Barco, Pixel LED & LED TVs) Checklist</h1>
+      </div>
+      
+      <div class="header-controls">
+        <div class="checked-by-container">
+          <label for="checkedBy">Checked by:</label>
+          <select id="checkedBy">
+            <option value="Select" selected>Select</option>
+            <option value="Tyagi">Tyagi</option>
+            <option value="Kishor">Kishor</option>
+            <option value="Rajesh">Rajesh</option>
+            <option value="Virender">Virender</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
       </div>
     </div>
     
-    <div class="button-group">
-      <button onclick="exportToExcel()">Download Excel</button>
-      <button onclick="exportToPDF()">Download PDF (B3)</button>
-      <button onclick="window.print()">Print</button>
-      <button onclick="generateReport()" class="generate-report-btn">Generate Report</button>
-    </div>
-
-    <div class="header-checkbox-row" id="headerCheckboxes">
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-sno" checked>
-        <label for="col-sno" class="header-checkbox-label">S.No</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-floor" checked>
-        <label for="col-floor" class="header-checkbox-label">Floor</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-studio" checked>
-        <label for="col-studio" class="header-checkbox-label">Studio</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-barcmodel" checked>
-        <label for="col-barcmodel" class="header-checkbox-label">Barco Model</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-cubea" checked>
-        <label for="col-cubea" class="header-checkbox-label">CUBE-A</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-cubeb" checked>
-        <label for="col-cubeb" class="header-checkbox-label">CUBE-B</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-cubec" checked>
-        <label for="col-cubec" class="header-checkbox-label">CUBE-C</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-cubed" checked>
-        <label for="col-cubed" class="header-checkbox-label">CUBE-D</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-ledsize1" checked>
-        <label for="col-ledsize1" class="header-checkbox-label">LED Size 85/75 Inch</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-ledsize2" checked>
-        <label for="col-ledsize2" class="header-checkbox-label">LED Size 65/55 Inch</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-controller" checked>
-        <label for="col-controller" class="header-checkbox-label">Controller</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-lvcsrno"> 
-        <label for="col-lvcsrno" class="header-checkbox-label">LVC sr.no</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-novastarsrno">
-        <label for="col-novastarsrno" class="header-checkbox-label">Novastar sr.no</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-lvcrestart" checked>
-        <label for="col-lvcrestart" class="header-checkbox-label">LVC/NDS</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-wmenet" checked>
-        <label for="col-wmenet" class="header-checkbox-label">WME/NET</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-convertor" checked>
-        <label for="col-convertor" class="header-checkbox-label">Convertor</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-ledtvinput" checked>
-        <label for="col-ledtvinput" class="header-checkbox-label">LED TV 85/75 Input</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-tvinput" checked>
-        <label for="col-tvinput" class="header-checkbox-label">LED TV 65/55 Input</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-hdmiinput" checked>
-        <label for="col-hdmiinput" class="header-checkbox-label">HDMI Input</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-lvcinput" checked>
-        <label for="col-lvcinput" class="header-checkbox-label">LVC Input</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-pixelinput" checked>
-        <label for="col-pixelinput" class="header-checkbox-label">Pixel Input</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-time" checked>
-        <label for="col-time" class="header-checkbox-label">Time</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-status" checked>
-        <label for="col-status" class="header-checkbox-label">Status</label>
-      </div>
-      <div class="header-checkbox-cell">
-        <input type="checkbox" class="header-checkbox" id="col-remarks" checked>
-        <label for="col-remarks" class="header-checkbox-label">Remarks</label>
+    <!-- Button Group Section -->
+    <div class="button-group-section">
+      <div class="button-group">
+        <button onclick="exportToExcel()">Download Excel</button>
+        <button onclick="exportToPDF()">Download PDF (B3)</button>
+        <button onclick="window.print()">Print</button>
       </div>
     </div>
+    
+    <!-- Column Toggle Section -->
+    <div class="column-toggle-section">
+      <div class="header-checkbox-row" id="headerCheckboxes">
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-sno" checked>
+          <label for="col-sno" class="header-checkbox-label">S.No</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-floor" checked>
+          <label for="col-floor" class="header-checkbox-label">Floor</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-studio" checked>
+          <label for="col-studio" class="header-checkbox-label">Studio</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-barcmodel" checked>
+          <label for="col-barcmodel" class="header-checkbox-label">Barco Model</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-cubea" checked>
+          <label for="col-cubea" class="header-checkbox-label">CUBE-A</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-cubeb" checked>
+          <label for="col-cubeb" class="header-checkbox-label">CUBE-B</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-cubec" checked>
+          <label for="col-cubec" class="header-checkbox-label">CUBE-C</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-cubed" checked>
+          <label for="col-cubed" class="header-checkbox-label">CUBE-D</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-ledsize1" checked>
+          <label for="col-ledsize1" class="header-checkbox-label">LED Size 85/75 Inch</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-ledsize2" checked>
+          <label for="col-ledsize2" class="header-checkbox-label">LED Size 65/55 Inch</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-controller" checked>
+          <label for="col-controller" class="header-checkbox-label">Controller</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-lvcsrno"> 
+          <label for="col-lvcsrno" class="header-checkbox-label">LVC sr.no</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-novastarsrno">
+          <label for="col-novastarsrno" class="header-checkbox-label">Novastar sr.no</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-lvcrestart" checked>
+          <label for="col-lvcrestart" class="header-checkbox-label">LVC/NDS</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-wmenet" checked>
+          <label for="col-wmenet" class="header-checkbox-label">WME/NET</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-convertor" checked>
+          <label for="col-convertor" class="header-checkbox-label">Convertor</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-ledtvinput" checked>
+          <label for="col-ledtvinput" class="header-checkbox-label">LED TV 85/75 Input</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-tvinput" checked>
+          <label for="col-tvinput" class="header-checkbox-label">LED TV 65/55 Input</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-hdmiinput" checked>
+          <label for="col-hdmiinput" class="header-checkbox-label">HDMI Input</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-lvcinput" checked>
+          <label for="col-lvcinput" class="header-checkbox-label">LVC Input</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-pixelinput" checked>
+          <label for="col-pixelinput" class="header-checkbox-label">Pixel Input</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-time" checked>
+          <label for="col-time" class="header-checkbox-label">Time</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-status" checked>
+          <label for="col-status" class="header-checkbox-label">Status</label>
+        </div>
+        <div class="header-checkbox-cell">
+          <input type="checkbox" class="header-checkbox" id="col-remarks" checked>
+          <label for="col-remarks" class="header-checkbox-label">Remarks</label>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Table Section -->
+    <div class="table-section">
+      <table id="checklistTable">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Floor</th>
+            <th>Studio</th>
+            <th>Barco Model</th>
+            <th>CUBE-A</th>
+            <th>CUBE-B</th>
+            <th>CUBE-C</th>
+            <th>CUBE-D</th>
+            <th>LED Size 85/75 Inch</th>
+            <th>LED Size 65/55 Inch</th>
+            <th>Controller</th>
+            <th>LVC sr.no</th>
+            <th>Novastar sr.no</th>
+            <th>LVC/NDS</th>
+            <th>WME/NET</th>
+            <th>Convertor</th>
+            <th>LED TV 85/75 Input</th>
+            <th>LED TV 65/55 Input</th>
+            <th>HDMI Input</th>
+            <th>LVC Input</th>
+            <th>Pixel Input</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Table rows will be populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
 
-    <table id="checklistTable">
-      <thead>
-        <tr>
-          <th>S.No</th>
-          <th>Floor</th>
-          <th>Studio</th>
-          <th>Barco Model</th>
-          <th>CUBE-A</th>
-          <th>CUBE-B</th>
-          <th>CUBE-C</th>
-          <th>CUBE-D</th>
-          <th>LED Size 85/75 Inch</th>
-          <th>LED Size 65/55 Inch</th>
-          <th>Controller</th>
-          <th>LVC sr.no</th>
-          <th>Novastar sr.no</th>
-          <th>LVC/NDS</th>
-          <th>WME/NET</th>
-          <th>Convertor</th>
-          <th>LED TV 85/75 Input</th>
-          <th>LED TV 65/55 Input</th>
-          <th>HDMI Input</th>
-          <th>LVC Input</th>
-          <th>Pixel Input</th>
-          <th>Time</th>
-          <th>Status</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-      </tbody>
-    </table>
-
+    <!-- Notes Section -->
     <div class="notes-section">
       <h3>Additional Notes</h3>
       <textarea id="additionalNotes" placeholder="Enter any additional notes or comments here..."></textarea>
@@ -470,10 +585,10 @@ const headerCheckboxes = document.getElementById('headerCheckboxes');
 const config = {
   floors: {
     'GF': [
-      { name: 'Pixel LED', type: 'pixel', controller: 'NovaStar VX600', novastarSrNo: '21VB33323N1A10005433', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'Onair (HIN/ENG)', time: '09:00', status: 'OK', remarks: 'Working well' }
+      { name: 'Pixel LED', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '21VB33323N1A10005433', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'Onair (HIN/ENG)', time: '09:00', status: 'OK', remarks: 'Working well' }
     ],
     '12': [
-      { name: 'CNBC TV18 4x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: '', lvcSrNo: '6892055838', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: 'AUX 2&3', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNBC TV18 4x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: 'D1-To-D4', lvcSrNo: '6892055838', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: 'AUX 2&3', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNBC TV18 LED TV', type: 'led', ledSize1: '85"', ledSize2: '55" x 2', ledTvInput: 'AUX 5&6', tvInput: 'AUX 6', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNBC TV18 Pixel LED', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '2IMB42A19N0A10005307', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 4', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNBC Awaaz 3x2 Barco', type: 'barco', barcoModel: 'KVD', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'RTR', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
@@ -554,7 +669,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.querySelectorAll('#headerCheckboxes input[type="checkbox"]').forEach(checkbox => {
     checkbox.addEventListener('change', function() {
-      // No longer hiding columns in the UI, just saving the state for PDF export
       saveSettings();
     });
   });
@@ -606,7 +720,6 @@ function loadSettings() {
       
       showToast('Settings loaded successfully');
     } else {
-      // Set default unchecked state for LVC sr.no and Novastar sr.no
       document.getElementById('col-lvcsrno').checked = false;
       document.getElementById('col-novastarsrno').checked = false;
       showToast('No saved settings found', 'info');
@@ -642,19 +755,15 @@ function resetSettings() {
 function populateTable() {
   let serial = 1;
   
-  // First process GF floor
   if (config.floors['GF']) {
     config.floors['GF'].forEach(studio => {
-      console.log(`Row ${serial}: Floor GF, Studio ${studio.name}`);
       addRow('GF', studio, serial++);
     });
   }
   
-  // Then process all other floors in order
   Object.keys(config.floors).forEach(floor => {
-    if (floor !== 'GF') { // Skip GF as we already processed it
+    if (floor !== 'GF') {
       config.floors[floor].forEach(studio => {
-        console.log(`Row ${serial}: Floor ${floor}, Studio ${studio.name}`);
         addRow(floor, studio, serial++);
       });
     }
@@ -1232,109 +1341,6 @@ function exportToExcel() {
   } catch (error) {
     console.error("Excel Error:", error);
     showToast("Excel export failed", 'error');
-  }
-}
-
-function generateReport() {
-  try {
-    const today = new Date();
-    const dateString = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getFullYear()} ${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
-    
-    let reportContent = `Noida Studio Displays Status Report\n`;
-    reportContent += `Generated on: ${dateString}\n`;
-    
-    const checkedBy = document.getElementById('checkedBy').value;
-    if (checkedBy !== 'Select') {
-      reportContent += `Checked by: ${checkedBy}\n`;
-    }
-    reportContent += `\n`;
-    
-    const rows = Array.from(document.querySelectorAll('#checklistTable tbody tr'));
-    
-    let okCount = 0;
-    let faultCount = 0;
-    let notWorkingCount = 0;
-    let standbyCount = 0;
-    let offCount = 0;
-    let underMaintenanceCount = 0;
-    let needsRepairCount = 0;
-    let testingCount = 0;
-    let awaitingPartsCount = 0;
-    let calibratingCount = 0;
-    let outOfServiceCount = 0;
-    let cubeACount = 0;
-    let cubeBCount = 0;
-    let cubeCCount = 0;
-    let cubeDCount = 0;
-    
-    rows.forEach(row => {
-      const statusCell = row.cells[row.cells.length - 2];
-      const status = statusCell.querySelector('select')?.value || statusCell.textContent;                 
-      if (status.includes('OK')) okCount++;
-      else if (status.includes('FAULT')) faultCount++;
-      else if (status.includes('NOT WORKING')) notWorkingCount++;
-      else if (status.includes('Standby')) standbyCount++;
-      else if (status.includes('OFF')) offCount++;
-      else if (status.includes('Under Maintenance')) underMaintenanceCount++;
-      else if (status.includes('Needs Repair')) needsRepairCount++;
-      else if (status.includes('Testing')) testingCount++;
-      else if (status.includes('Awaiting Parts')) awaitingPartsCount++;
-      else if (status.includes('Calibrating')) calibratingCount++;
-      else if (status.includes('Out of Service')) outOfServiceCount++;
-    });
-    
-    reportContent += `Summary:\n`;
-    reportContent += `- Working (OK): ${okCount}\n`;
-    reportContent += `- Faulty: ${faultCount}\n`;
-    reportContent += `- Not Working: ${notWorkingCount}\n`;
-    reportContent += `- Standby: ${standbyCount}\n`;
-    reportContent += `- Off: ${offCount}\n`;
-    reportContent += `- Under Maintenance: ${underMaintenanceCount}\n`;
-    reportContent += `- Needs Repair: ${needsRepairCount}\n`;
-    reportContent += `- Testing: ${testingCount}\n`;
-    reportContent += `- Awaiting Parts: ${awaitingPartsCount}\n`;
-    reportContent += `- Calibrating: ${calibratingCount}\n`;
-    reportContent += `- Out of Service: ${outOfServiceCount}\n\n`;
-    
-    reportContent += `Details of Issues:\n`;
-    
-    rows.forEach(row => {
-      const studioCell = row.cells[2];
-      const statusCell = row.cells[row.cells.length - 2];
-      const remarksCell = row.cells[row.cells.length - 1];
-      
-      const studio = studioCell.textContent;
-      const status = statusCell.querySelector('select')?.value || statusCell.textContent;
-      const remarks = remarksCell.querySelector('input')?.value || remarksCell.textContent;
-      
-     
-      if (!status.includes('OK')) {
-        reportContent += `- ${studio}: ${status} (${remarks})\n`;
-      }
-    });
-    
-    const notes = document.getElementById('additionalNotes').value.trim();
-    if (notes) {
-      reportContent += `\nAdditional Notes:\n${notes}\n`;
-    }
-    
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Studio_Displays_Report_${dateString.replace(/:/g, '-')}.txt`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    showToast('Report generated successfully');
-  } catch (error) {
-    console.error("Report Generation Error:", error);
-    showToast("Failed to generate report", 'error');
   }
 }
 
