@@ -528,6 +528,15 @@
         // Populate the dropdown when page loads
         document.addEventListener('DOMContentLoaded', function() {
             populateUserDropdown();
+			const savedUser = localStorage.getItem('loggedInUser');
+			if (savedUser && users[savedUser]) {
+			currentUser = savedUser;
+			document.getElementById('login-container').classList.add('hidden');
+			document.getElementById('main-content').classList.remove('hidden');
+			document.getElementById('current-user-display').textContent = savedUser;
+			loadUserContent(savedUser);
+		}
+
         });
         
         function populateUserDropdown() {
@@ -575,6 +584,7 @@
                 if (password === users[username].password || users[username].password === "") {
                     // Successful login
                     currentUser = username;
+					localStorage.setItem('loggedInUser', username);
                     document.getElementById('login-container').classList.add('hidden');
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('current-user-display').textContent = username;
@@ -592,14 +602,16 @@
         
         // Logout function
         function logout() {
-            currentUser = null;
-            document.getElementById('login-container').classList.remove('hidden');
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('error-message').textContent = '';
-            document.getElementById('success-message').textContent = '';
-        }
+			localStorage.removeItem('loggedInUser'); // 🧹 Clear saved login
+			currentUser = null;
+			document.getElementById('login-container').classList.remove('hidden');
+			document.getElementById('main-content').classList.add('hidden');
+			document.getElementById('username').value = '';
+			document.getElementById('password').value = '';
+			document.getElementById('error-message').textContent = '';
+			document.getElementById('success-message').textContent = '';
+		}
+
         
         // Load content based on user
         function loadUserContent(username) {
