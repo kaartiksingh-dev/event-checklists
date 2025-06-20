@@ -9,6 +9,35 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
+    /* Sleek home button positioned lower */
+    .home-button {
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      z-index: 9999;
+      background-color: transparent;
+      color: #2c3e50;
+      padding: 6px;
+      border-radius: 50%;
+      text-decoration: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    .home-button:hover {
+      background-color: rgba(44, 62, 80, 0.1);
+      transform: translateY(-2px);
+    }
+    .home-button svg {
+      width: 20px;
+      height: 20px;
+      fill: #2c3e50;
+    }
+
     body {
       font-family: 'Poppins', sans-serif;
       background: #f5f5f5;
@@ -38,18 +67,18 @@
       left: 0;
       right: 0;
       text-align: center;
-      pointer-events: none; /* Allows clicks to pass through to elements below */
+      pointer-events: none;
     }
     
     .header-title {
       color: #2c3e50;
       font-size: 24px;
       margin: 0;
-      display: inline-block; /* Needed for text-align center to work */
+      display: inline-block;
     }
     
     .header-controls {
-      margin-left: auto; /* Pushes controls to the right */
+      margin-left: auto;
     }
     
     .logo {
@@ -368,13 +397,25 @@
       .logo {
         height: 40px;
       }
+      
+      /* Adjust home button for mobile */
+      .home-button {
+        top: 70px;
+        left: 10px;
+        width: 32px;
+        height: 32px;
+      }
+      .home-button svg {
+        width: 18px;
+        height: 18px;
+      }
     }
     
     @media print {
       .header-title-container {
         position: static;
         text-align: left;
-        padding-left: 60px; /* Make space for logo */
+        padding-left: 60px;
       }
       
       .button-group-section, 
@@ -389,15 +430,26 @@
       .notes-section { 
         display: block; 
       }
+      
+      .home-button {
+        display: none !important;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Sleek Home Button -->
+  <a href="index.html" class="home-button" title="Go to Home">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </svg>
+  </a>
+
   <div class="container">
     <!-- Header Section -->
     <div class="header-container">
       <div class="logo-container">
-        <img src="NW18.png"
+        <img src="NW18.png" 
              alt="Network18 Logo" 
              class="logo">
       </div>
@@ -426,7 +478,6 @@
       <div class="button-group">
         <button onclick="exportToExcel()">Download Excel</button>
         <button onclick="exportToPDF()">Download PDF (B3)</button>
-        <button onclick="window.print()">Print</button>
       </div>
     </div>
     
@@ -585,10 +636,10 @@ const headerCheckboxes = document.getElementById('headerCheckboxes');
 const config = {
   floors: {
     'GF': [
-      { name: 'Pixel LED', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '21VB33323N1A10005433', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'Onair (HIN/ENG)', time: '09:00', status: 'OK', remarks: 'Working well' }
+      { name: 'Pixel LED', type: 'pixel', controller: 'NovaStar VX600', novastarSrNo: '21VB33323N1A10005433', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'Onair (HIN/ENG)', time: '09:00', status: 'OK', remarks: 'Working well' }
     ],
     '12': [
-      { name: 'CNBC TV18 4x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: 'D1-To-D4', lvcSrNo: '6892055838', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: 'AUX 2&3', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNBC TV18 4x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: '', lvcSrNo: '6892055838', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: 'AUX 2&3', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNBC TV18 LED TV', type: 'led', ledSize1: '85"', ledSize2: '55" x 2', ledTvInput: 'AUX 5&6', tvInput: 'AUX 6', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNBC TV18 Pixel LED', type: 'pixel', controller: 'NovaStar VX400', novastarSrNo: '2IMB42A19N0A10005307', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 4', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNBC Awaaz 3x2 Barco', type: 'barco', barcoModel: 'KVD', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'RTR', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
@@ -627,7 +678,7 @@ const config = {
       { name: 'CNN News18 7x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A7', cubeB: 'B1-To-B7', cubeC: 'C1-To-C7', lvcSrNo: '6892055917', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 9', lvcInput: 'AUX 1', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNN News18 4x4 Barco', type: 'barco', barcoModel: 'Unisee 800', cubeA: 'A1-To-A4', cubeB: 'B1-To-B4', cubeC: 'C1-To-C4', cubeD: 'D1-To-D4', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 3', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'CNN News18 LED TV', type: 'led', ledSize1: '85"x 2', ledSize2: '', ledTvInput: 'AUX 6', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
-      { name: 'CNN News18 India Pixel LED', type: 'pixel', controller: 'NovaStar VX1', novastarSrNo: 'MHGA8221BN0A10013751', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 8', time: '09:00', status: 'OK', remarks: 'Working well' },
+      { name: 'CNN News18 Pixel LED', type: 'pixel', controller: 'NovaStar VX1', novastarSrNo: 'MHGA8221BN0A10013751', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 8', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'News18 India 5x3 Barco', type: 'barco', barcoModel: 'Unisee 700', cubeA: 'A1-To-A5', cubeB: 'B1-To-B5', cubeC: 'C1-To-C5', lvcSrNo: '6892055839', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 8', lvcInput: 'AUX 4', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'News18 India 3x2 Barco', type: 'barco', barcoModel: 'Unisee 800', cubeA: 'A1-To-A3', cubeB: 'B1-To-B3', ledTvInput: '', tvInput: '', hdmiInput: 'AUX 7', lvcInput: '', pixelInput: '', time: '09:00', status: 'OK', remarks: 'Working well' },
       { name: 'News18 India Pixel LED', type: 'pixel', controller: 'NovaStar H2', novastarSrNo: '2TUB02B12N0A10045314', ledTvInput: '', tvInput: '', hdmiInput: '', lvcInput: '', pixelInput: 'AUX 6', time: '09:00', status: 'OK', remarks: 'Working well' },
@@ -1325,7 +1376,7 @@ function exportToExcel() {
     for (let C = range.s.c; C <= range.e.c; ++C) {
       const header = XLSX.utils.encode_col(C) + "1";
       if (!ws[header]) continue;
-      let max_width = ws[header].v.length;
+     let max_width = ws[header].v.length;
       for (let R = range.s.r + 1; R <= range.e.r; ++R) {
         const cell = XLSX.utils.encode_col(C) + (R + 1);
         if (ws[cell] && ws[cell].v) {
@@ -1359,3 +1410,4 @@ function showToast(message, type = 'success') {
 </script>
 </body>
 </html>
+      

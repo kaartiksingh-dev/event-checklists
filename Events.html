@@ -57,12 +57,63 @@
   <script src="https://unpkg.com/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
   <!-- SheetJS (latest) -->
   <script src="https://unpkg.com/xlsx@0.20.3/dist/xlsx.full.min.js"></script>
+  <style>
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    .glass-effect:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    @supports not (backdrop-filter: blur(10px)) {
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+  </style>
 </head>
 <body className="bg-gray-50 font-sans">
   <div id="root"></div>
   <div id="error" className="hidden text-red-600 p-4"></div>
+  <script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+      if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+          var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+          var firstSheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[firstSheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+          var filteredData = jsonData.filter(row => row.some(filledCell));
+          var headerRowIndex = filteredData.findIndex((row, index) =>
+            row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+          );
+          if (headerRowIndex === -1 || headerRowIndex > 25) {
+            headerRowIndex = 0;
+          }
+          var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+          csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+          return csv;
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      }
+      return gk_fileData[filename] || "";
+    }
+  </script>
   <script type="text/babel">
-    // Error Boundary Component
     class ErrorBoundary extends React.Component {
       state = { hasError: false, error: null };
       static getDerivedStateFromError(error) {
@@ -81,7 +132,6 @@
       }
     }
 
-    // Main EventReportForm component
     function EventReportForm() {
       const [formData, setFormData] = React.useState({
         daySelection: 'Select',
@@ -104,7 +154,7 @@
         installationTime: '',
         checkingDone: '',
         feedTestLocation: '',
-        feedTestTime: '', // New field for time picker
+        feedTestTime: '',
         eventStartTime: '',
         eventEndTime: '',
         eventDuration: '',
@@ -148,7 +198,7 @@
         secondDate: '',
         secondCheckingDone: '',
         secondFeedTestLocation: '',
-        secondFeedTestTime: '', // New field for second day time picker
+        secondFeedTestTime: '',
         secondEventDuration: '',
         secondEventEngineerComments: '',
         secondSignature: '',
@@ -242,6 +292,17 @@
         }
       };
 
+      const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        try {
+          const [year, month, day] = dateStr.split('-');
+          return `${day}-${month}-${year}`;
+        } catch (error) {
+          console.error('Date formatting error:', error);
+          return dateStr;
+        }
+      };
+
       const loadImage = (url) => {
         return new Promise((resolve, reject) => {
           const img = new Image();
@@ -271,11 +332,10 @@
           });
 
           const margin = 10;
-          let y = 15;
+          let y = 17;
           const pageWidth = 297;
 
-          // Load and add image (left-aligned)
-          const imageUrl = './network18-logo.png';
+          const imageUrl = './NW18.png';
           try {
             const img = await loadImage(imageUrl);
             const imgWidth = 50;
@@ -314,7 +374,7 @@
           doc.setFontSize(8);
           const eventDetails = [
             { label: 'Event Name', value: formData.eventName },
-            { label: 'Date', value: formData.date },
+            { label: 'Date', value: formatDate(formData.date) },
             { label: 'Channel', value: formData.channel },
             { label: 'Location', value: formData.location },
             { label: 'City', value: formData.city },
@@ -527,35 +587,37 @@
           doc.text(comments1, margin, y);
           y += comments1.length * 4 + 4;
           doc.text(`Signature: ${formData.signature || ''}`, margin, y);
-          doc.text(`Date: ${formData.signatureDate || ''}`, margin + 140, y);
+          doc.text(`Date: ${formatDate(formData.signatureDate) || ''}`, margin + 140, y);
           y += 8;
 
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(12);
-          doc.text('Second Day Details', margin, y);
-          y += 2;
-          doc.line(margin, y, pageWidth - margin, y);
-          y += 4;
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8);
-          const secondDayDetails = [
-            { label: 'Date', value: formData.secondDate },
-            { label: 'Checking Done', value: formData.secondCheckingDone },
-            { label: 'Feed Test Location', value: formData.secondFeedTestLocation },
-            { label: 'Feed Test Time', value: formData.secondFeedTestTime },
-            { label: 'Event Duration', value: formData.secondEventDuration }
-          ];
-          secondDayDetails.forEach((item, index) => {
-            const col = index % 2 === 0 ? 0 : 140;
-            const row = Math.floor(index / 2);
-            doc.text(`${item.label}: ${item.value || ''}`, margin + col, y + row * 5);
-          });
-          y += Math.ceil(secondDayDetails.length / 2) * 5 + 4;
-          const comments2 = doc.splitTextToSize(`Comments: ${formData.secondEventEngineerComments || ''}`, 277);
-          doc.text(comments2, margin, y);
-          y += comments2.length * 4 + 4;
-          doc.text(`Signature: ${formData.secondSignature || ''}`, margin, y);
-          doc.text(`Date: ${formData.secondSignatureDate || ''}`, margin + 140, y);
+          if (formData.daySelection === '2' || formData.secondDate || formData.secondCheckingDone || formData.secondFeedTestLocation || formData.secondFeedTestTime || formData.secondEventDuration || formData.secondEventEngineerComments || formData.secondSignature || formData.secondSignatureDate) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('Second Day Details', margin, y);
+            y += 2;
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 4;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            const secondDayDetails = [
+              { label: 'Date', value: formatDate(formData.secondDate) },
+              { label: 'Checking Done', value: formData.secondCheckingDone },
+              { label: 'Feed Test Location', value: formData.secondFeedTestLocation },
+              { label: 'Feed Test Time', value: formData.secondFeedTestTime },
+              { label: 'Event Duration', value: formData.secondEventDuration }
+            ];
+            secondDayDetails.forEach((item, index) => {
+              const col = index % 2 === 0 ? 0 : 140;
+              const row = Math.floor(index / 2);
+              doc.text(`${item.label}: ${item.value || ''}`, margin + col, y + row * 5);
+            });
+            y += Math.ceil(secondDayDetails.length / 2) * 5 + 4;
+            const comments2 = doc.splitTextToSize(`Comments: ${formData.secondEventEngineerComments || ''}`, 277);
+            doc.text(comments2, margin, y);
+            y += comments2.length * 4 + 4;
+            doc.text(`Signature: ${formData.secondSignature || ''}`, margin, y);
+            doc.text(`Date: ${formatDate(formData.secondSignatureDate) || ''}`, margin + 140, y);
+          }
 
           console.log('PDF generated successfully');
           doc.save(`Network18_Event_Report_${fileTimestamp}.pdf`);
@@ -604,7 +666,7 @@
             ['Day Selection', formData.daySelection !== 'Select' ? formData.daySelection : null],
             ['Created By', formData.createdBy || null],
             ['Event Name', formData.eventName],
-            ['Date', formData.date],
+            ['Date', formatDate(formData.date)],
             ['Channel', formData.channel],
             ['Location', formData.location],
             ['City', formData.city],
@@ -661,18 +723,22 @@
             ['Engineer Comments & Signature (Day 1)'],
             ['Comments', formData.eventEngineerComments],
             ['Signature', formData.signature],
-            ['Date', formData.signatureDate],
-            [],
-            ['Second Day Details'],
-            ['Date', formData.secondDate],
-            ['Checking Done', formData.secondCheckingDone],
-            ['Feed Test Location', formData.secondFeedTestLocation],
-            ['Feed Test Time', formData.secondFeedTestTime],
-            ['Event Duration', formData.secondEventDuration],
-            ['Comments', formData.secondEventEngineerComments],
-            ['Signature', formData.secondSignature],
-            ['Date', formData.secondSignatureDate]
+            ['Date', formData.signatureDate]
           ];
+          if (formData.daySelection === '2' || formData.secondDate || formData.secondCheckingDone || formData.secondFeedTestLocation || formData.secondFeedTestTime || formData.secondEventDuration || formData.secondEventEngineerComments || formData.secondSignature || formData.secondSignatureDate) {
+            wsData.push(
+              [],
+              ['Second Day Details'],
+              ['Date', formData.secondDate],
+              ['Checking Done', formData.secondCheckingDone],
+              ['Feed Test Location', formData.secondFeedTestLocation],
+              ['Feed Test Time', formData.secondFeedTestTime],
+              ['Event Duration', formData.secondEventDuration],
+              ['Comments', formData.secondEventEngineerComments],
+              ['Signature', formData.secondSignature],
+              ['Date', formData.secondSignatureDate]
+            );
+          }
           console.log('wsData:', wsData);
           const ws = XLSX.utils.aoa_to_sheet(wsData);
           XLSX.utils.book_append_sheet(wb, ws, 'Event Report');
@@ -685,25 +751,49 @@
         }
       };
 
+      const isSecondDayDetailsVisible = formData.daySelection === '2' ||
+        formData.secondDate ||
+        formData.secondCheckingDone ||
+        formData.secondFeedTestLocation ||
+        formData.secondFeedTestTime ||
+        formData.secondEventDuration ||
+        formData.secondEventEngineerComments ||
+        formData.secondSignature ||
+        formData.secondSignatureDate;
+
       return (
         <div className="max-w-full mx-auto p-8 bg-white rounded-xl shadow-2xl mt-8 border border-gray-200" style={{ maxWidth: '90vw' }}>
-          <div className="flex justify-start mb-8">
-            <img
-              src="NW18.png"
-              alt="Network18 Logo"
-              className="h-12"
-            />
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <img
+                src="./NW18.png"
+                alt="Network18 Logo"
+                className="h-12"
+                style={{ marginTop: '8px' }}
+              />
+            </div>
+            <div className="flex justify-center flex-grow">
+              <h1 className="text-4xl font-bold text-blue-700">
+                Network 18 Event Report
+              </h1>
+            </div>
+            <div className="w-12"></div>
           </div>
-          <h1 className="text-4xl font-bold text-center text-blue-700 mb-8">
-            Network 18 Event Report
-          </h1>
-          <div className="flex justify-center mb-8 space-x-4">
-            <button type="button" onClick={generatePDF} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
-              Download PDF
-            </button>
-            <button type="button" onClick={generateExcel} className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200 shadow-md">
-              Download Excel
-            </button>
+          <div className="flex items-center mb-8">
+            <a
+              href="index.html"
+              className="glass-effect text-white px-6 py-3 rounded-xl flex items-center justify-center w-12 h-12 hover:text-gray-100 mr-4"
+            >
+              <span className="text-xl">🏠</span>
+            </a>
+            <div className="flex justify-center flex-grow space-x-4">
+              <button type="button" onClick={generatePDF} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+                Download PDF
+              </button>
+              <button type="button" onClick={generateExcel} className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200 shadow-md">
+                Download Excel
+              </button>
+            </div>
           </div>
           <div className="flex justify-between mb-8">
             <div>
@@ -1133,73 +1223,75 @@
                 />
               </div>
             </div>
-            <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Second Day Details (Optional)</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="date"
-                  name="secondDate"
-                  value={formData.secondDate}
+            {isSecondDayDetailsVisible && (
+              <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-100">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-blue-200 pb-2">Second Day Details</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="date"
+                    name="secondDate"
+                    value={formData.secondDate}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                  <input
+                    type="text"
+                    name="secondCheckingDone"
+                    value={formData.secondCheckingDone}
+                    onChange={handleInputChange}
+                    placeholder="Checking Done"
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                  <input
+                    type="text"
+                    name="secondFeedTestLocation"
+                    value={formData.secondFeedTestLocation}
+                    onChange={handleInputChange}
+                    placeholder="Feed Test Location"
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                  <input
+                    type="time"
+                    name="secondFeedTestTime"
+                    value={formData.secondFeedTestTime}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                  <input
+                    type="text"
+                    name="secondEventDuration"
+                    value={formData.secondEventDuration}
+                    onChange={handleInputChange}
+                    placeholder="Event Duration"
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
+                <textarea
+                  name="secondEventEngineerComments"
+                  value={formData.secondEventEngineerComments}
                   onChange={handleInputChange}
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
-                <input
-                  type="text"
-                  name="secondCheckingDone"
-                  value={formData.secondCheckingDone}
-                  onChange={handleInputChange}
-                  placeholder="Checking Done"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
-                <input
-                  type="text"
-                  name="secondFeedTestLocation"
-                  value={formData.secondFeedTestLocation}
-                  onChange={handleInputChange}
-                  placeholder="Feed Test Location"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
-                <input
-                  type="time"
-                  name="secondFeedTestTime"
-                  value={formData.secondFeedTestTime}
-                  onChange={handleInputChange}
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
-                <input
-                  type="text"
-                  name="secondEventDuration"
-                  value={formData.secondEventDuration}
-                  onChange={handleInputChange}
-                  placeholder="Event Duration"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
+                  placeholder="Event Engineer Comments & Remarks (Day 2)"
+                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full h-20 mt-4"
+                ></textarea>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <input
+                    type="text"
+                    name="secondSignature"
+                    value={formData.secondSignature}
+                    onChange={handleInputChange}
+                    placeholder="Signature"
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                  <input
+                    type="date"
+                    name="secondSignatureDate"
+                    value={formData.secondSignatureDate}
+                    onChange={handleInputChange}
+                    className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+                  />
+                </div>
               </div>
-              <textarea
-                name="secondEventEngineerComments"
-                value={formData.secondEventEngineerComments}
-                onChange={handleInputChange}
-                placeholder="Event Engineer Comments & Remarks (Day 2)"
-                className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full h-20 mt-4"
-              ></textarea>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <input
-                  type="text"
-                  name="secondSignature"
-                  value={formData.secondSignature}
-                  onChange={handleInputChange}
-                  placeholder="Signature"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
-                <input
-                  type="date"
-                  name="secondSignatureDate"
-                  value={formData.secondSignatureDate}
-                  onChange={handleInputChange}
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
-                />
-              </div>
-            </div>
+            )}
           </form>
         </div>
       );

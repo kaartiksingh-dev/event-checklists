@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,12 +60,12 @@
             width: 90%;
             max-width: 1200px;
             margin: 20px auto;
-            /* Fully transparent container */
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             padding: 30px;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255,255,255,0.3);
+            position: relative;
         }
         
         h1 {
@@ -46,7 +85,6 @@
         }
         
         .report-button {
-            /* Opaque buttons */
             background-color: #3498db;
             color: white;
             border: none;
@@ -59,7 +97,6 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             min-width: 200px;
             text-align: center;
-            opacity: 1 !important;
         }
         
         .report-button:hover {
@@ -76,7 +113,6 @@
         .report-section {
             margin-bottom: 30px;
             padding: 20px;
-            /* Transparent section backgrounds */
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             display: none;
@@ -98,36 +134,707 @@
         .active-button {
             background-color: #2c3e50;
         }
+        
+        /* Login form styles */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .login-form input, .login-form select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            background-color: rgba(255,255,255,0.8);
+            font-size: 16px;
+        }
+        
+        .login-form button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .login-form button:hover {
+            background-color: #2980b9;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: none;
+        }
+        
+        .success-message {
+            color: #2ecc71;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            float: right; /* Shift to the right side */
+            margin-bottom: 15px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        /* Dropdown arrow styling */
+        .login-form select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 1em;
+        }
+        
+        /* Action buttons in reports */
+        .action-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background-color: #219653;
+        }
+        
+        .admin-btn {
+            background-color: #9b59b6;
+        }
+        
+        .admin-btn:hover {
+            background-color: #8e44ad;
+        }
+        
+        /* Password change modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .modal-content {
+            background-color: rgba(255,255,255,0.9);
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            color: #333;
+            text-shadow: none;
+            position: relative;
+        }
+        
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        /* User management section */
+        .user-management {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .user-list {
+            margin-top: 10px;
+        }
+        
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .password-info {
+            background-color: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        /* Password toggle eye */
+        .password-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            user-select: none;
+            font-size: 18px;
+        }
+        
+        .password-toggle.show {
+            content: "👁️"; /* Open eye for show */
+        }
+        
+        .password-toggle.hide {
+            content: "😶"; /* Closed eye for hide */
+        }
+        
+        /* Add user modal */
+        .add-user-form {
+            margin-top: 20px;
+        }
+        
+        .add-user-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Events and Studio Displays Reports</h1>
-        
-        <<div class="button-container">
-			<a href="Events.html" class="report-button">Event Report</a>
-			<a href="Display.html" class="report-button">Studio Displays</a>
-			<button class="report-button" onclick="alert('Asset Inventory is under development. Coming Soon!!');">Asset Inventory</button>
-		</div>
+    <!-- Login Form -->
+    <div id="login-container" class="login-container">
+        <h2>Please Login</h2>
+        <form class="login-form" onsubmit="return validateLogin(event)">
+            <select id="username" required>
+                <option value="">Select User</option>
+            </select>
+            <div class="password-container">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Password">
+                <span class="password-toggle hide" onclick="togglePasswordVisibility('password')">😶</span>
+            </div>
+            <button type="submit">Login</button>
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+        </form>
+    </div>
+    
+    <!-- Main Content (hidden initially) -->
+    <div id="main-content" class="hidden">
+        <div class="container">
+            <button class="logout-btn" onclick="logout()">Logout (<span id="current-user-display"></span>)</button>
+            <h1>Events and Studio Displays Reports</h1>
+            
+            <div class="button-container">
+					<a href="Events.html" class="report-button">Event Report</a>
+					<a href="Display.html" class="report-button">Studio Displays</a>
+                <button class="report-button" onclick="showAssetInventoryPopup()">Asset Inventory</button>
+            </div>
+            
+            <button class="action-btn" onclick="openPasswordModal()">Change Password</button>
+            
+            <div id="event-report" class="report-section active-section">
+                <h2>Event Report</h2>
+                <div id="event-content"></div>
+            </div>
+            
+            <div id="studio-displays" class="report-section">
+                <h2>Studio Displays</h2>
+                <div id="studio-content"></div>
+            </div>
+            
+            <div id="asset-inventory" class="report-section">
+                <h2>Asset Inventory</h2>
+                <div id="asset-content"></div>
+            </div>
+            
+            <div id="user-management" class="report-section" style="display: none;">
+                <h2>User Management</h2>
+                <div id="user-content"></div>
+            </div>
+        </div>
+    </div>
 
-        
-        <div id="event-report" class="report-section active-section">
-            <h2>Event Report</h2>
-            <p>Generates Event Reports.</p>
+    <!-- Password Change Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <form id="passwordForm" onsubmit="return changePassword(event)">
+                <h2>Change Password</h2>
+                <div class="password-container">
+                    <label for="currentPassword">Current Password:</label>
+                    <input type="password" id="currentPassword" required>
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('currentPassword')">😶</span>
+                </div>
+                <div class="password-container">
+                    <label for="newPassword">New Password:</label>
+                    <input type="password" id="newPassword" required minlength="6">
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('newPassword')">😶</span>
+                </div>
+                <div class="password-container">
+                    <label for="confirmPassword">Confirm New Password:</label>
+                    <input type="password" id="confirmPassword" required minlength="6">
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('confirmPassword')">😶</span>
+                </div>
+                <button type="submit" class="action-btn">Update Password</button>
+                <div id="passwordError" class="error-message"></div>
+                <div id="passwordSuccess" class="success-message"></div>
+            </form>
         </div>
-        
-        <div id="studio-displays" class="report-section">
-            <h2>Studio Displays</h2>
-            <p>Generates Studio Reports.</p>
+    </div>
+
+    <!-- Admin Reset Password Modal -->
+    <div id="adminResetModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <form id="adminResetForm" onsubmit="return adminResetPassword(event)">
+                <h2>Reset User Password</h2>
+                <div>
+                    <label for="resetUsername">Select User:</label>
+                    <select id="resetUsername" required></select>
+                </div>
+                <div class="password-container">
+                    <label for="adminNewPassword">New Password:</label>
+                    <input type="password" id="adminNewPassword" required minlength="6">
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('adminNewPassword')">😶</span>
+                </div>
+                <div class="password-container">
+                    <label for="adminConfirmPassword">Confirm Password:</label>
+                    <input type="password" id="adminConfirmPassword" required minlength="6">
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('adminConfirmPassword')">😶</span>
+                </div>
+                <button type="submit" class="action-btn admin-btn">Reset Password</button>
+                <div id="adminResetError" class="error-message"></div>
+                <div id="adminResetSuccess" class="success-message"></div>
+            </form>
         </div>
-        
-        <div id="asset-inventory" class="report-section">
-            <h2>Asset Inventory</h2>
-            <p>Complete listing of all assets and equipment.</p>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <form id="addUserForm" onsubmit="return addNewUser(event)">
+                <h2>Add New User</h2>
+                <div>
+                    <label for="newUsername">Username:</label>
+                    <input type="text" id="newUsername" required>
+                </div>
+                <div class="password-container">
+                    <label for="newUserPassword">Initial Password:</label>
+                    <input type="password" id="newUserPassword" required minlength="6">
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('newUserPassword')">😶</span>
+                </div>
+                <div class="password-container">
+                    <label for="confirmNewPassword">Confirm Password:</label>
+                    <input type="password" id="confirmNewPassword" required minlength="6">
+                    <span class="password-toggle hide" onclick="togglePasswordVisibility('confirmNewPassword')">😶</span>
+                </div>
+                <div>
+                    <label>
+                        <input type="checkbox" id="makeAdmin"> Make Administrator
+                    </label>
+                </div>
+                <button type="submit" class="action-btn">Create User</button>
+                <div id="addUserError" class="error-message"></div>
+                <div id="addUserSuccess" class="success-message"></div>
+            </form>
         </div>
     </div>
 
     <script>
+        // User database
+        let users = {
+            "munendrak": {
+                password: "",
+                lastChanged: new Date(),
+                isAdmin: false
+            },
+            "kamalk": {
+                password: "",
+                lastChanged: new Date(),
+                isAdmin: false
+            },
+            "rajesh.k": {
+                password: "",
+                lastChanged: new Date(),
+                isAdmin: false
+            },
+            "virender-singh": {
+                password: "",
+                lastChanged: new Date(),
+                isAdmin: false
+            },
+            "gurmeet.singh": {
+                password: "",
+                lastChanged: new Date(),
+                isAdmin: true
+            }
+        };
+        
+        // Current user variable
+        let currentUser = null;
+        
+        // Populate the dropdown when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            populateUserDropdown();
+        });
+        
+        function populateUserDropdown() {
+            const usernameDropdown = document.getElementById('username');
+            usernameDropdown.innerHTML = '<option value="">Select User</option>';
+            
+            // Add each username as an option
+            for (const username in users) {
+                const option = document.createElement('option');
+                option.value = username;
+                option.textContent = username;
+                usernameDropdown.appendChild(option);
+            }
+        }
+        
+        // Toggle password visibility
+        function togglePasswordVisibility(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = passwordField.nextElementSibling;
+            
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "👁️"; // Open eye for show
+                toggleIcon.classList.remove("hide");
+                toggleIcon.classList.add("show");
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "😶"; // Closed eye for hide
+                toggleIcon.classList.remove("show");
+                toggleIcon.classList.add("hide");
+            }
+        }
+        
+        // Validate login
+        function validateLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('error-message');
+            
+            // Check if user exists
+            if (users[username]) {
+                // Allow login if password is empty or matches (now always empty)
+                if (password === users[username].password || users[username].password === "") {
+                    // Successful login
+                    currentUser = username;
+                    document.getElementById('login-container').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('current-user-display').textContent = username;
+                    
+                    // Load user-specific content
+                    loadUserContent(username);
+                    return false;
+                }
+            }
+            
+            // Failed login
+            errorElement.textContent = "Invalid username or password";
+            return false;
+        }
+        
+        // Logout function
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('error-message').textContent = '';
+            document.getElementById('success-message').textContent = '';
+        }
+        
+        // Load content based on user
+        function loadUserContent(username) {
+            const user = users[username];
+            const isAdmin = user.isAdmin;
+            
+            // Event Report Section
+            let eventHTML = `<p>Welcome, ${username}!</p>`;
+            document.getElementById('event-content').innerHTML = eventHTML;
+            
+            // Studio Displays Section
+            let studioHTML = `<p>Welcome, ${username}!</p>`;
+            document.getElementById('studio-content').innerHTML = studioHTML;
+            
+            // Asset Inventory Section
+            let assetHTML = `<p>Welcome, ${username}!</p>`;
+            document.getElementById('asset-content').innerHTML = assetHTML;
+            
+            // User Management Section (kept hidden, no button to show it)
+        }
+        
+        // Modal functions
+        function openPasswordModal() {
+            const modal = document.getElementById('passwordModal');
+            document.getElementById('passwordError').textContent = '';
+            document.getElementById('passwordSuccess').textContent = '';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            modal.style.display = 'block';
+        }
+        
+        function openAdminResetModal() {
+            const modal = document.getElementById('adminResetModal');
+            const userDropdown = document.getElementById('resetUsername');
+            
+            // Populate user dropdown excluding Admin
+            userDropdown.innerHTML = '';
+            for (const username in users) {
+                if (!users[username].isAdmin) { // Don't allow resetting admin password
+                    const option = document.createElement('option');
+                    option.value = username;
+                    option.textContent = username;
+                    userDropdown.appendChild(option);
+                }
+            }
+            
+            document.getElementById('adminResetError').textContent = '';
+            document.getElementById('adminResetSuccess').textContent = '';
+            document.getElementById('adminNewPassword').value = '';
+            document.getElementById('adminConfirmPassword').value = '';
+            modal.style.display = 'block';
+        }
+        
+        function openAddUserModal() {
+            const modal = document.getElementById('addUserModal');
+            document.getElementById('addUserError').textContent = '';
+            document.getElementById('addUserSuccess').textContent = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newUserPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            document.getElementById('makeAdmin').checked = false;
+            modal.style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            document.getElementById('adminResetModal').style.display = 'none';
+            document.getElementById('addUserModal').style.display = 'none';
+        }
+        
+        // Change password function
+        function changePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorElement = document.getElementById('passwordError');
+            const successElement = document.getElementById('passwordSuccess');
+            
+            // Clear messages
+            errorElement.textContent = '';
+            successElement.textContent = '';
+            
+            // Validate current password (now optional since it's empty)
+            if (currentPassword !== users[currentUser].password && users[currentUser].password !== "") {
+                errorElement.textContent = "Current password is incorrect";
+                return false;
+            }
+            
+            // Validate new password
+            if (newPassword !== confirmPassword) {
+                errorElement.textContent = "New passwords do not match";
+                return false;
+            }
+            
+            if (newPassword.length < 6) {
+                errorElement.textContent = "Password must be at least 6 characters";
+                return false;
+            }
+            
+            // Update password
+            users[currentUser].password = newPassword;
+            users[currentUser].lastChanged = new Date();
+            
+            // Show success message
+            successElement.textContent = "Password changed successfully!";
+            
+            // Close modal after 2 seconds and reload content
+            setTimeout(() => {
+                closeModal();
+                loadUserContent(currentUser);
+            }, 2000);
+            
+            return false;
+        }
+        
+        // Admin reset password function
+        function adminResetPassword(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('resetUsername').value;
+            const newPassword = document.getElementById('adminNewPassword').value;
+            const confirmPassword = document.getElementById('adminConfirmPassword').value;
+            const errorElement = document.getElementById('adminResetError');
+            const successElement = document.getElementById('adminResetSuccess');
+            
+            // Clear messages
+            errorElement.textContent = '';
+            successElement.textContent = '';
+            
+            // Validate new password
+            if (newPassword !== confirmPassword) {
+                errorElement.textContent = "Passwords do not match";
+                return false;
+            }
+            
+            if (newPassword.length < 6) {
+                errorElement.textContent = "Password must be at least 6 characters";
+                return false;
+            }
+            
+            // Update password
+            users[username].password = newPassword;
+            users[username].lastChanged = new Date();
+            
+            // Show success message
+            successElement.textContent = `Password for ${username} has been reset successfully!`;
+            
+            // Close modal after 2 seconds and reload content
+            setTimeout(() => {
+                closeModal();
+                loadUserContent(currentUser);
+            }, 2000);
+            
+            return false;
+        }
+        
+        // Add new user function
+        function addNewUser(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newUserPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            const isAdmin = document.getElementById('makeAdmin').checked;
+            const errorElement = document.getElementById('addUserError');
+            const successElement = document.getElementById('addUserSuccess');
+            
+            // Clear messages
+            errorElement.textContent = '';
+            successElement.textContent = '';
+            
+            // Validate inputs
+            if (users[username]) {
+                errorElement.textContent = "Username already exists";
+                return false;
+            }
+            
+            if (password !== confirmPassword) {
+                errorElement.textContent = "Passwords do not match";
+                return false;
+            }
+            
+            if (password.length < 6) {
+                errorElement.textContent = "Password must be at least 6 characters";
+                return false;
+            }
+            
+            // Create new user
+            users[username] = {
+                password: password,
+                lastChanged: new Date(),
+                isAdmin: isAdmin
+            };
+            
+            // Show success message
+            successElement.textContent = `User ${username} created successfully!`;
+            
+            // Close modal after 2 seconds and reload content
+            setTimeout(() => {
+                closeModal();
+                populateUserDropdown();
+                loadUserContent(currentUser);
+            }, 2000);
+            
+            return false;
+        }
+        
+        // Force password reset
+        function forcePasswordReset(username) {
+            if (confirm(`Reset password for ${username} to default?`)) {
+                const defaultPassword = username.toLowerCase() + "123!";
+                users[username].password = defaultPassword;
+                users[username].lastChanged = new Date();
+                alert(`${username}'s password has been reset to default`);
+                loadUserContent(currentUser);
+            }
+        }
+        
+        // Delete user
+        function deleteUser(username) {
+            if (confirm(`Are you sure you want to delete user ${username}?`)) {
+                delete users[username];
+                alert(`${username} has been deleted`);
+                populateUserDropdown();
+                loadUserContent(currentUser);
+            }
+        }
+        
+        function requestAsset() {
+            alert(`Requesting asset (${currentUser})`);
+        }
+        
         function showSection(sectionId) {
             // Hide all sections
             document.querySelectorAll('.report-section').forEach(section => {
@@ -148,6 +855,18 @@
             const index = sections.indexOf(sectionId);
             if (index !== -1) {
                 buttons[index].classList.add('active-button');
+            }
+        }
+        
+        function showAssetInventoryPopup() {
+            alert("www.nw18eventsdisplays.com says\nAsset Inventory is under development. Coming Soon!!");
+            // Prevent default section display for Asset Inventory
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                closeModal();
             }
         }
     </script>
